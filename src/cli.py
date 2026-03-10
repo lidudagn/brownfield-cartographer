@@ -74,8 +74,8 @@ def analyze(
     logger.info(f"Starting Surveyor analysis on {repo_path}")
     
     result = run_analysis(
-        repo_path=repr(Path(repo_path).absolute()).strip("'"),
-        output_dir=repr(Path(output_dir).absolute()).strip("'"),
+        repo_path=str(Path(repo_path).absolute()),
+        output_dir=str(Path(output_dir).absolute()),
         dialect=dialect,
         workers=workers,
         days=days,

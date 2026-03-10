@@ -239,5 +239,8 @@ def run_pagerank(graph: nx.DiGraph) -> None:
         pr = nx.pagerank(graph)
         for node, score in pr.items():
             graph.nodes[node]["pagerank"] = score
+            mod = graph.nodes[node].get("node")
+            if mod:
+                mod.pagerank = score
     except nx.NetworkXError as e:
         logger.warning(f"PageRank failed: {e}")

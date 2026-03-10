@@ -122,6 +122,7 @@ class ModuleNode(BaseModel):
         default=0.0,
         description="unique_change_days / 30",
     )
+    pagerank: float = 0.0
     is_dead_code_candidate: bool = False
     is_entry_point: bool = False
     entry_point_type: Optional[
