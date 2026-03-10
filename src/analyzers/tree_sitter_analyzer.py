@@ -250,6 +250,18 @@ class TreeSitterAnalyzer:
                 tree = parser.parse(source.encode("utf-8"))
                 root = tree.root_node
 
+                if getattr(root, "has_error", False):
+                    is_complete = False
+                    parse_errors.append(
+                        AnalysisError(
+                            error_type="partial_parse",
+                            file_path=filepath,
+                            message="Tree-sitter encountered syntax errors",
+                            recoverable=True,
+                            fallback_used="partial_results",
+                        )
+                    )
+
                 imports, unresolved = self._extract_python_imports(
                     root, source, filepath, repo_root
                 )
