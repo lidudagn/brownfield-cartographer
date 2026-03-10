@@ -172,7 +172,7 @@ def run_analysis(
         transformations.append(TransformationNode(
             name=Path(mod.path).stem,
             source_datasets=mod.imports,
-            target_datasets=[f"table_{Path(mod.path).stem}"],
+            target_datasets=[f"{Path(mod.path).stem}"],
             transformation_type="select",
             source_file=mod.path,
             line_range=(1, len(raw_sql.splitlines())),
@@ -222,15 +222,46 @@ def run_analysis(
     produces_edges = []
     consumes_edges = []
     for t in transformations:
+        raw_text = None
+        try:
+            raw_text = (repo / t.source_file).read_text(encoding="utf-8")
+        except OSError:
+            pass
+            
         for sd in t.source_datasets:
+            snippet = f"consumes {sd}"
+            start_line = t.line_range[0]
+            if raw_text:
+                search_term = sd
+                if sd.startswith("source:"):
+                    parts = sd.replace("source:", "").split(".")
+                    if len(parts) == 2:
+                        search_term = parts[1]
+                else:
+                    search_term = Path(sd).stem
+                
+                for i, line in enumerate(raw_text.splitlines()):
+                    if search_term in line:
+                        snippet = line.strip()
+                        start_line = i + 1
+                        break
             consumes_edges.append(ConsumesEdge(
                 source=t.name, target=sd, 
-                evidence=Evidence(file_path=t.source_file, line_start=t.line_range[0], line_end=t.line_range[1], snippet=f"consumes {sd}", analysis_method="sqlglot")
+                evidence=Evidence(file_path=t.source_file, line_start=start_line, line_end=start_line, snippet=snippet, analysis_method="sqlglot")
             ))
+            
         for td in t.target_datasets:
+            snippet = f"produces {td}"
+            start_line = t.line_range[0]
+            if raw_text:
+                for i, line in enumerate(raw_text.splitlines()):
+                    if line.strip() and not line.strip().startswith("--"):
+                        snippet = line.strip()
+                        start_line = i + 1
+                        break
             produces_edges.append(ProducesEdge(
                 source=t.name, target=td, 
-                evidence=Evidence(file_path=t.source_file, line_start=t.line_range[0], line_end=t.line_range[1], snippet=f"produces {td}", analysis_method="sqlglot")
+                evidence=Evidence(file_path=t.source_file, line_start=start_line, line_end=start_line, snippet=snippet, analysis_method="sqlglot")
             ))
 
     # Step 10: Serialization & Vis (F-8, M-11)

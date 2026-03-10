@@ -69,9 +69,22 @@ def parse_sources(sources_yaml: str) -> List[DatasetNode]:
                         import csv
                         try:
                             with open(csv_candidates[0], encoding='utf-8') as f:
-                                reader = csv.reader(f)
-                                headers = next(reader)
-                                schema_snapshot = {col: "unknown" for col in headers}
+                                reader = csv.DictReader(f)
+                                first_row = next(reader, {})
+                                schema_snapshot = {}
+                                for col, val in first_row.items():
+                                    if not val:
+                                        schema_snapshot[col] = "varchar"
+                                    elif val.isdigit():
+                                        schema_snapshot[col] = "integer"
+                                    elif val.replace(".", "", 1).isdigit():
+                                        schema_snapshot[col] = "float"
+                                    elif "-" in val and ":" in val:
+                                        schema_snapshot[col] = "timestamp"
+                                    elif "-" in val and len(val) == 10:
+                                        schema_snapshot[col] = "date"
+                                    else:
+                                        schema_snapshot[col] = "varchar"
                         except Exception:
                             pass
                         

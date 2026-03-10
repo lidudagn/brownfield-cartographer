@@ -139,6 +139,13 @@ def preprocess_dbt_sql(
         clean,
     )
     
+    # Replace other macros like cents_to_dollars('...')
+    clean = re.sub(
+        r"\{\{\s*([a-zA-Z0-9_]+)\(\s*(.*?)\s*\)\s*\}\}",
+        r"\1(\2)",
+        clean,
+    )
+    
     # Strip remaining Jinja
     clean = re.sub(r"\{\{.*?\}\}", "NULL", clean)
     clean = re.sub(r"\{%.*?%\}", "", clean, flags=re.DOTALL)
@@ -237,7 +244,7 @@ def extract_column_lineage(sql_text: str, source_file: str, dialect: str) -> Lis
                     target_column=target_name,
                     source_columns=source_cols,
                     transformation=transform,
-                    expression=source_expr.sql(dialect=dialect) if source_cols else None,
+                    expression=source_expr.sql(dialect=dialect),
                     source_file=source_file,
                     line_range=line_range
                 ))
