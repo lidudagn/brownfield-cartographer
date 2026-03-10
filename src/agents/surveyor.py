@@ -187,6 +187,10 @@ def detect_dead_code(modules: List[ModuleNode], graph: nx.DiGraph) -> List[DeadC
             
         path = mod.path
         
+        # Build artifacts
+        if any(x in path.lower() for x in ["package-lock", "taskfile", "poetry.lock", "makefile", "dockerfile"]):
+            continue
+        
         # dbt aware overrides
         if mod.language == "yaml" and ("models/" in path or path.endswith("__sources.yml") or "dbt_project.yml" in path or "packages.yml" in path):
             continue
@@ -216,10 +220,33 @@ def get_evidence_line(repo_path: str, source_path: str, search_target: str) -> E
     ev = Evidence(file_path=source_path, line_start=1, line_end=1, snippet=search_target, analysis_method="regex")
     if not full_path.exists():
         return ev
+        
+    stem = Path(search_target).stem
+    is_macro = search_target.startswith("macros/")
+    
     try:
         lines = full_path.read_text(encoding="utf-8").splitlines()
         for i, line in enumerate(lines):
-            if search_target in line or Path(search_target).stem in line:
+            match = False
+            if source_path.endswith(".sql"):
+                if is_macro:
+                    if f"{stem}(" in line:
+                        match = True
+                elif search_target.startswith("source:"):
+                    parts = search_target.replace("source:", "").split(".")
+                    if len(parts) == 2 and f"source('{parts[0]}', '{parts[1]}')" in line:
+                        match = True
+                    elif search_target in line:
+                        match = True
+                else:
+                    # Look for ref('stem') exactly, avoiding CTE aliases
+                    if f"ref('{stem}')" in line or f'ref("{stem}")' in line:
+                        match = True
+            else:
+                if search_target in line or stem in line:
+                    match = True
+                    
+            if match:
                 ev.line_start = i + 1
                 ev.line_end = i + 1
                 ev.snippet = line.strip()
@@ -241,6 +268,7 @@ def build_module_graph(modules: List[ModuleNode], repo_path: str = ".") -> Tuple
         
     # Add imports as directed edges
     for mod in modules:
+        resolved_imports = []
         for imp in mod.imports:
             target = imp
             if not target.endswith('.py') and not target.endswith('.sql'):
@@ -253,6 +281,7 @@ def build_module_graph(modules: List[ModuleNode], repo_path: str = ".") -> Tuple
                         target = m.path
                         break
             
+            resolved_imports.append(target)
             if target != imp or target in G:
                 G.add_edge(mod.path, target)
                 imports_edges.append(ImportsEdge(
@@ -260,6 +289,9 @@ def build_module_graph(modules: List[ModuleNode], repo_path: str = ".") -> Tuple
                     target=target,
                     evidence=get_evidence_line(repo_path, mod.path, target)
                 ))
+        
+        # Replace the shortnames with standard paths for Phase 2 compatibility
+        mod.imports = list(set(resolved_imports))
         
         # Link macros (CALLS edge)
         for func in mod.public_functions:

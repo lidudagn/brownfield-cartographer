@@ -587,7 +587,8 @@ class TreeSitterAnalyzer:
             complexity_score=complexity,
             imports=imports,
             public_functions=macro_calls,
-            classes=ctes,  # CTEs stored in classes field as structural names
+            classes=[],
+            cte_definitions=ctes,  # CTEs stored in their own structural field
             lines_of_code=len(source.splitlines()),
             comment_ratio=comment_ratio,
             is_complete_parse=True,
