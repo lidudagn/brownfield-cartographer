@@ -539,6 +539,7 @@ class TreeSitterAnalyzer:
             m.group(1) for m in macro_pattern.finditer(source)
             if m.group(1) not in ("ref", "source", "config", "var", "env_var", "return")
         ]
+        macro_calls = list(set(macro_calls))
 
         # Extract CTE names
         cte_pattern = re.compile(r"(\w+)\s+as\s*\(", re.IGNORECASE)

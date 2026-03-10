@@ -54,6 +54,7 @@ from src.models.schemas import (
     DeadCodeCandidate,
     Evidence,
     ImportsEdge,
+    CallsEdge,
     ModuleNode,
     UnresolvedReference,
 )
@@ -193,7 +194,7 @@ def run_analysis(
     apply_80_20_velocity(modules)
 
     # Step 7: Build Module Graph
-    G, imports_edges = build_module_graph(modules)
+    G, imports_edges, calls_edges = build_module_graph(modules, repo_path=repo_path)
     
     # Step 8: PageRank & Circular Dependencies (MF-4)
     run_pagerank(G)
@@ -217,6 +218,7 @@ def run_analysis(
         functions=[],  # We have functions in ModuleNode.public_functions
         transformations=[],  # Would properly map to TransformationNode in production
         imports_edges=imports_edges,
+        calls_edges=calls_edges,
         unresolved_refs=unresolved_refs,
         dead_code_candidates=dead_code,
         circular_dependencies=cycles,

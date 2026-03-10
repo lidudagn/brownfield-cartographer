@@ -28,6 +28,7 @@ from src.models.schemas import (
     DeadCodeCandidate,
     Evidence,
     ImportsEdge,
+    CallsEdge,
     ModuleNode,
 )
 
@@ -185,6 +186,17 @@ def detect_dead_code(modules: List[ModuleNode], graph: nx.DiGraph) -> List[DeadC
             continue
             
         path = mod.path
+        
+        # dbt aware overrides
+        if mod.language == "yaml" and ("models/" in path or path.endswith("__sources.yml") or "dbt_project.yml" in path or "packages.yml" in path):
+            continue
+            
+        if "macro" in path or path.startswith("macros/"):
+            macro_name = Path(path).stem
+            is_used = any(m.language == "jinja_sql" and macro_name in m.public_functions for m in modules)
+            if is_used or macro_name.startswith("generate_"):
+                continue
+
         if path in graph and graph.in_degree(path) == 0:
             candidate = calculate_dead_code_confidence(mod, graph)
             if candidate.confidence > 0.0:
@@ -198,10 +210,30 @@ def detect_dead_code(modules: List[ModuleNode], graph: nx.DiGraph) -> List[DeadC
 # =============================================================================
 
 
-def build_module_graph(modules: List[ModuleNode]) -> Tuple[nx.DiGraph, List[ImportsEdge]]:
-    """Construct a NetworkX DiGraph where nodes are ModuleObjects and edges are Imports."""
+def get_evidence_line(repo_path: str, source_path: str, search_target: str) -> Evidence:
+    """Helper to pinpoint the line number of an import or call in the source file."""
+    full_path = Path(repo_path) / source_path
+    ev = Evidence(file_path=source_path, line_start=1, line_end=1, snippet=search_target, analysis_method="regex")
+    if not full_path.exists():
+        return ev
+    try:
+        lines = full_path.read_text(encoding="utf-8").splitlines()
+        for i, line in enumerate(lines):
+            if search_target in line or Path(search_target).stem in line:
+                ev.line_start = i + 1
+                ev.line_end = i + 1
+                ev.snippet = line.strip()
+                break
+    except Exception:
+        pass
+    return ev
+
+
+def build_module_graph(modules: List[ModuleNode], repo_path: str = ".") -> Tuple[nx.DiGraph, List[ImportsEdge], List[CallsEdge]]:
+    """Construct a NetworkX DiGraph where nodes are ModuleObjects and edges are Imports/Calls."""
     G = nx.DiGraph()
-    edges = []
+    imports_edges = []
+    calls_edges = []
     
     # Add all modules as nodes
     for mod in modules:
@@ -210,12 +242,12 @@ def build_module_graph(modules: List[ModuleNode]) -> Tuple[nx.DiGraph, List[Impo
     # Add imports as directed edges
     for mod in modules:
         for imp in mod.imports:
-            # Very basic resolution constraint logic (assuming exact path or standard dbt ref)
-            # In complete Phase 1, we match ref('abc') -> abc.sql
             target = imp
             if not target.endswith('.py') and not target.endswith('.sql'):
                 # Heuristic lookup for dbt refs or python base names
                 for m in modules:
+                    if m.language == "yaml" and not imp.startswith("configures") and not imp.startswith("source:"):
+                        continue  # Never resolve standard code refs to yaml files
                     base = Path(m.path).stem
                     if base == imp or target == f"__dbt_ref__{base}":
                         target = m.path
@@ -223,14 +255,24 @@ def build_module_graph(modules: List[ModuleNode]) -> Tuple[nx.DiGraph, List[Impo
             
             if target != imp or target in G:
                 G.add_edge(mod.path, target)
-                edges.append(ImportsEdge(
+                imports_edges.append(ImportsEdge(
                     source=mod.path,
                     target=target,
-                    evidence=Evidence(
-                        file_path=mod.path, line_start=0, line_end=0, snippet=imp, analysis_method="regex"
-                    )
+                    evidence=get_evidence_line(repo_path, mod.path, target)
                 ))
-    return G, edges
+        
+        # Link macros (CALLS edge)
+        for func in mod.public_functions:
+            macro_target = f"macros/{func}.sql"
+            if any(m.path == macro_target for m in modules):
+                G.add_edge(mod.path, macro_target)
+                calls_edges.append(CallsEdge(
+                    source=mod.path,
+                    target=macro_target,
+                    evidence=get_evidence_line(repo_path, mod.path, func)
+                ))
+                
+    return G, imports_edges, calls_edges
 
 
 def run_pagerank(graph: nx.DiGraph) -> None:
