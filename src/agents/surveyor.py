@@ -294,7 +294,7 @@ def build_module_graph(modules: List[ModuleNode], repo_path: str = ".") -> Tuple
         mod.imports = list(set(resolved_imports))
         
         # Link macros (CALLS edge)
-        for func in mod.public_functions:
+        for func in mod.called_macros:
             macro_target = f"macros/{func}.sql"
             if any(m.path == macro_target for m in modules):
                 G.add_edge(mod.path, macro_target)

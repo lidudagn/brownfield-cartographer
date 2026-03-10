@@ -581,12 +581,16 @@ class TreeSitterAnalyzer:
             )
             comment_ratio = comment_count / total if total > 0 else 0.0
 
+        is_macro = "macros/" in filepath.replace("\\", "/")
+        macro_name = Path(filepath).stem if is_macro else None
+        
         return ModuleNode(
             path=filepath,
             language="jinja_sql",
             complexity_score=complexity,
             imports=imports,
-            public_functions=macro_calls,
+            public_functions=[macro_name] if macro_name else [],
+            called_macros=macro_calls,
             classes=[],
             cte_definitions=ctes,  # CTEs stored in their own structural field
             lines_of_code=len(source.splitlines()),

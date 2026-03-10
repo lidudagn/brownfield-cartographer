@@ -61,6 +61,19 @@ def parse_sources(sources_yaml: str) -> List[DatasetNode]:
                     name = col.get("name")
                     if name:
                         schema_snapshot[name] = col.get("data_type", "unknown")
+                
+                if not schema_snapshot:
+                    repo_root = Path(sources_yaml).parent.parent.parent
+                    csv_candidates = list(repo_root.rglob(f"{table.name}.csv"))
+                    if csv_candidates:
+                        import csv
+                        try:
+                            with open(csv_candidates[0], encoding='utf-8') as f:
+                                reader = csv.reader(f)
+                                headers = next(reader)
+                                schema_snapshot = {col: "unknown" for col in headers}
+                        except Exception:
+                            pass
                         
                 datasets.append(DatasetNode(
                     name=f"{source.name}.{table.name}",

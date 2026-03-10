@@ -56,6 +56,7 @@ from src.models.schemas import (
     ImportsEdge,
     CallsEdge,
     ModuleNode,
+    TransformationNode,
     UnresolvedReference,
 )
 
@@ -163,15 +164,15 @@ def run_analysis(
     # Combine transformations
     transformations = []
     for mod in sql_modules:
-        transformations.append({
-            "name": Path(mod.path).stem,
-            "source_datasets": mod.imports,
-            "target_datasets": [f"table_{Path(mod.path).stem}"],
-            "transformation_type": "select",
-            "source_file": mod.path,
-            "line_range": (0, 0),
-            "column_lineage": [lin for lin in lineages if lin.source_file == mod.path]
-        })
+        transformations.append(TransformationNode(
+            name=Path(mod.path).stem,
+            source_datasets=mod.imports,
+            target_datasets=[f"table_{Path(mod.path).stem}"],
+            transformation_type="select",
+            source_file=mod.path,
+            line_range=(0, 0),
+            column_lineage=[lin for lin in lineages if lin.source_file == mod.path]
+        ))
 
     # Step 4: DAG Config & Source Parsing (M-5)
     dbt_config = DbtProjectConfig()
@@ -216,7 +217,7 @@ def run_analysis(
         modules=modules,
         datasets=datasets,
         functions=[],  # We have functions in ModuleNode.public_functions
-        transformations=[],  # Would properly map to TransformationNode in production
+        transformations=transformations,
         imports_edges=imports_edges,
         calls_edges=calls_edges,
         unresolved_refs=unresolved_refs,
@@ -226,10 +227,9 @@ def run_analysis(
     )
     
     wrapper = KnowledgeGraphWrapped(cg)
-    json_path = out / "module_graph.json"
     png_path = out / "module_graph.png"
     
-    wrapper.save(json_path)
+    wrapper.save_artifacts(out)
     wrapper.visualize(png_path)
     
     duration = time.time() - start_time

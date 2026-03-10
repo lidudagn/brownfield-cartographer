@@ -129,6 +129,58 @@ class KnowledgeGraphWrapped:
         filepath.write_text(json_data, encoding="utf-8")
         logger.info(f"Saved {len(self.codebase.modules)} modules to {filepath}")
 
+    def save_artifacts(self, out_dir: Path) -> None:
+        """Serialize CodebaseGraph into distinct JSON artifacts for downstream agents."""
+        out_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 1. module_graph.json
+        mg_data = {
+            "repo_path": self.codebase.repo_path,
+            "analysis_timestamp": self.codebase.analysis_timestamp,
+            "modules": [m.model_dump() for m in self.codebase.modules],
+            "imports_edges": [e.model_dump() for e in self.codebase.imports_edges],
+            "calls_edges": [e.model_dump() for e in self.codebase.calls_edges],
+            "functions": [f.model_dump() for f in self.codebase.functions]
+        }
+        (out_dir / "module_graph.json").write_text(json.dumps(mg_data, indent=2), encoding="utf-8")
+        
+        # 2. lineage_graph.json
+        lg_data = {
+            "transformations": [t.model_dump() for t in self.codebase.transformations],
+            "produces_edges": [e.model_dump() for e in self.codebase.produces_edges],
+            "consumes_edges": [e.model_dump() for e in self.codebase.consumes_edges]
+        }
+        (out_dir / "lineage_graph.json").write_text(json.dumps(lg_data, indent=2), encoding="utf-8")
+        
+        # 3. dataset_registry.json
+        dr_data = {
+            "datasets": [d.model_dump() for d in self.codebase.datasets]
+        }
+        (out_dir / "dataset_registry.json").write_text(json.dumps(dr_data, indent=2), encoding="utf-8")
+        
+        # 4. analysis_report.json
+        ar_data = {
+            "summary": {
+                "modules_analyzed": len(self.codebase.modules),
+                "datasets_discovered": len(self.codebase.datasets),
+                "transformations": len(self.codebase.transformations),
+                "macros": len([m for m in self.codebase.modules if "macro" in m.path])
+            },
+            "architecture_insights": {
+                "top_critical_modules": [m.path for m in sorted(self.codebase.modules, key=lambda x: getattr(x, "pagerank", 0), reverse=True)[:5]],
+                "entry_points": [m.path for m in self.codebase.modules if m.is_entry_point]
+            },
+            "risk_analysis": {
+                "dead_code_candidates": [d.model_dump() for d in self.codebase.dead_code_candidates],
+                "circular_dependencies": [c.model_dump() for c in self.codebase.circular_dependencies],
+                "parse_errors": [e.model_dump() for e in self.codebase.analysis_errors]
+            },
+            "dataset_summary": [d.name for d in self.codebase.datasets]
+        }
+        (out_dir / "analysis_report.json").write_text(json.dumps(ar_data, indent=2), encoding="utf-8")
+        
+        logger.info(f"Saved independent analytical artifacts to {out_dir}")
+
     @classmethod
     def load(cls, filepath: Path) -> KnowledgeGraphWrapped:
         """Deserialize from JSON to full object graph (M-11)."""

@@ -133,6 +133,7 @@ class ModuleNode(BaseModel):
         default_factory=list, description="Module paths this file depends on"
     )
     public_functions: List[str] = Field(default_factory=list)
+    called_macros: List[str] = Field(default_factory=list)
     classes: List[str] = Field(default_factory=list)
     cte_definitions: List[str] = Field(default_factory=list)
     lines_of_code: int = 0
