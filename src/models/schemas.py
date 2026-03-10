@@ -87,7 +87,7 @@ class ColumnLineage(BaseModel):
     target_column: str
     source_columns: List[str]  # ["stg_orders.order_id", "stg_orders.subtotal"]
     transformation: Literal[
-        "passthrough", "rename", "aggregate", "compute", "case", "window", "cast"
+        "passthrough", "rename", "aggregate", "compute", "case", "window", "cast", "wildcard_passthrough"
     ]
     expression: Optional[str] = None  # e.g., "sum(subtotal)"
     source_file: str = ""

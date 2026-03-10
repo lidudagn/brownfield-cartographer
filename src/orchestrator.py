@@ -55,6 +55,8 @@ from src.models.schemas import (
     Evidence,
     ImportsEdge,
     CallsEdge,
+    ProducesEdge,
+    ConsumesEdge,
     ModuleNode,
     TransformationNode,
     UnresolvedReference,
@@ -164,13 +166,16 @@ def run_analysis(
     # Combine transformations
     transformations = []
     for mod in sql_modules:
+        if "macros/" in mod.path.replace("\\", "/"):
+            continue
+            
         transformations.append(TransformationNode(
             name=Path(mod.path).stem,
             source_datasets=mod.imports,
             target_datasets=[f"table_{Path(mod.path).stem}"],
             transformation_type="select",
             source_file=mod.path,
-            line_range=(0, 0),
+            line_range=(1, len(raw_sql.splitlines())),
             column_lineage=[lin for lin in lineages if lin.source_file == mod.path]
         ))
 
@@ -182,7 +187,10 @@ def run_analysis(
         
     datasets = []
     for src_yml in repo.glob("**/__sources.yml"):
-        datasets.extend(parse_sources(str(src_yml)))
+        new_datasets = parse_sources(str(src_yml))
+        for d in new_datasets:
+            d.source_file = str(Path(d.source_file).relative_to(repo.absolute())) if Path(d.source_file).is_absolute() else d.source_file
+            datasets.append(d)
 
     # Step 5: Entry Point Detection (F-9)
     detect_entry_points(modules, dbt_config, repo_path)
@@ -210,6 +218,21 @@ def run_analysis(
         if dcc.module_path in modules_dict:
             modules_dict[dcc.module_path].is_dead_code_candidate = True
 
+    # Step 9.5: Produces and Consumes Edges
+    produces_edges = []
+    consumes_edges = []
+    for t in transformations:
+        for sd in t.source_datasets:
+            consumes_edges.append(ConsumesEdge(
+                source=t.name, target=sd, 
+                evidence=Evidence(file_path=t.source_file, line_start=t.line_range[0], line_end=t.line_range[1], snippet=f"consumes {sd}", analysis_method="sqlglot")
+            ))
+        for td in t.target_datasets:
+            produces_edges.append(ProducesEdge(
+                source=t.name, target=td, 
+                evidence=Evidence(file_path=t.source_file, line_start=t.line_range[0], line_end=t.line_range[1], snippet=f"produces {td}", analysis_method="sqlglot")
+            ))
+
     # Step 10: Serialization & Vis (F-8, M-11)
     cg = CodebaseGraph(
         repo_path=str(repo.absolute()),
@@ -220,6 +243,8 @@ def run_analysis(
         transformations=transformations,
         imports_edges=imports_edges,
         calls_edges=calls_edges,
+        produces_edges=produces_edges,
+        consumes_edges=consumes_edges,
         unresolved_refs=unresolved_refs,
         dead_code_candidates=dead_code,
         circular_dependencies=cycles,

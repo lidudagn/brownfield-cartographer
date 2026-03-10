@@ -180,6 +180,7 @@ def extract_column_lineage(sql_text: str, source_file: str, dialect: str) -> Lis
 
     lineage = []
     
+    lines = sql_text.splitlines()
     for ast in parsed:
         if not ast:
             continue
@@ -193,11 +194,18 @@ def extract_column_lineage(sql_text: str, source_file: str, dialect: str) -> Lis
                 elif isinstance(expr, exp.Column):
                     target_name = expr.name
                     source_expr = expr
+                elif isinstance(expr, exp.Star):
+                    target_name = "*"
+                    source_expr = expr
                 else:
                     # Some other expression without an alias, fallback to SQL string
                     target_name = str(expr)
                     source_expr = expr
                 
+                # Check for duplicate target in this lineage to prevent explosion
+                if any(l.target_column == target_name for l in lineage):
+                    continue
+
                 # 2. Extract all source columns referenced in this expression
                 source_cols = []
                 for col in source_expr.find_all(exp.Column):
@@ -207,16 +215,31 @@ def extract_column_lineage(sql_text: str, source_file: str, dialect: str) -> Lis
                 
                 # 3. Categorize the transformation
                 transform = _categorize_transform(source_expr)
+                if target_name == "*":
+                    transform = "wildcard_passthrough"
                 
-                # Get line numbers if sqlglot kept them (often lost in parse)
-                # We default to 0,0 and let evidence cover the snippet
+                # Find line number (approximate by string match)
+                start_line = 0
+                for i, line in enumerate(lines):
+                    if target_name != "*" and target_name in line:
+                        start_line = i + 1
+                        break
+                    elif source_cols and source_cols[0] in line:
+                        start_line = i + 1
+                        break
+                    elif target_name == "*" and "*" in line:
+                        start_line = i + 1
+                        break
+                
+                line_range = (start_line, start_line) if start_line > 0 else (1, len(lines))
+                
                 lineage.append(ColumnLineage(
                     target_column=target_name,
                     source_columns=source_cols,
                     transformation=transform,
                     expression=source_expr.sql(dialect=dialect) if source_cols else None,
                     source_file=source_file,
-                    line_range=(0, 0)
+                    line_range=line_range
                 ))
                 
     return lineage

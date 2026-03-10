@@ -308,9 +308,11 @@ def build_module_graph(modules: List[ModuleNode], repo_path: str = ".") -> Tuple
 
 
 def run_pagerank(graph: nx.DiGraph) -> None:
-    """Run PageRank and attach scores to nodes."""
+    """Run PageRank and attach scores to nodes.
+    Reverse the graph so that downstream hubs (who are imported locally) get the high scores.
+    """
     try:
-        pr = nx.pagerank(graph)
+        pr = nx.pagerank(graph.reverse())
         for node, score in pr.items():
             graph.nodes[node]["pagerank"] = score
             mod = graph.nodes[node].get("node")
