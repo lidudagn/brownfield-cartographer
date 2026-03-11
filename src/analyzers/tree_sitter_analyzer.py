@@ -267,6 +267,7 @@ class TreeSitterAnalyzer:
                 )
                 public_functions = self._extract_python_functions(root, source)
                 classes = self._extract_python_classes(root, source)
+                datasets_read, datasets_written = self._extract_python_data_flows(root, source)
                 is_entry_point = self._detect_python_entry_point(root, source)
             except Exception as e:
                 logger.warning("Tree-sitter Python parse error for %s: %s", filepath, e)
@@ -284,6 +285,7 @@ class TreeSitterAnalyzer:
             # Fallback: regex-based extraction
             imports = self._extract_python_imports_regex(source)
             public_functions = self._extract_python_functions_regex(source)
+            datasets_read, datasets_written = [], []
             is_entry_point = '__name__' in source and '__main__' in source
 
         complexity = self._calculate_cyclomatic_complexity_python(source, parser)
@@ -296,6 +298,8 @@ class TreeSitterAnalyzer:
             imports=imports,
             public_functions=public_functions,
             classes=classes,
+            datasets_read=datasets_read,
+            datasets_written=datasets_written,
             lines_of_code=len(source.splitlines()),
             comment_ratio=comment_ratio,
             is_complete_parse=is_complete,
@@ -379,6 +383,79 @@ class TreeSitterAnalyzer:
                         params = params_node.text.decode("utf-8") if params_node else "()"
                         functions.append(f"{name}{params}")
         return functions
+
+    def _extract_python_data_flows(self, root: Any, source: str) -> Tuple[List[str], List[str]]:
+        """Extract Pandas/PySpark reads and writes by reconstructing method chains."""
+        reads: List[str] = []
+        writes: List[str] = []
+        
+        for node in self._walk_tree(root):
+            if node.type == "call":
+                chain = self._get_method_chain_name(node.child_by_field_name("function"))
+                if not chain:
+                    continue
+                    
+                full_chain = ".".join(chain)
+                
+                # Pandas simple reads/writes (e.g., pd.read_csv('...'), df.to_parquet('...'))
+                if any(r in full_chain for r in ("read_csv", "read_json", "read_table", "read_gbq", "read_parquet")):
+                    arg = self._get_first_string_arg(node)
+                    if arg: reads.append(arg)
+                elif any(w in full_chain for w in ("to_csv", "to_json", "to_gbq", "to_parquet", "to_sql")):
+                    arg = self._get_first_string_arg(node)
+                    if arg: writes.append(arg)
+                
+                # PySpark chains (e.g., spark.read.format('parquet').load('...'))
+                # For PySpark, we typically care about the load()/save()/csv()/parquet() call
+                elif "read" in chain and any(m in chain for m in ("load", "csv", "parquet", "json", "format")):
+                    # the dataset path is usually the argument to load, csv, parquet, json
+                    if chain[-1] in ("load", "csv", "parquet", "json"):
+                        arg = self._get_first_string_arg(node)
+                        if arg: reads.append(arg)
+                        
+                elif "write" in chain and any(m in chain for m in ("save", "csv", "parquet", "json", "mode", "format", "saveAsTable")):
+                    if chain[-1] in ("save", "csv", "parquet", "json", "saveAsTable"):
+                        arg = self._get_first_string_arg(node)
+                        if arg: writes.append(arg)
+                        
+        return reads, writes
+
+    def _get_method_chain_name(self, node: Any) -> List[str]:
+        """Recursively build the method chain parts (e.g. spark, read, format, load)"""
+        if not node:
+            return []
+        if node.type == "identifier":
+            return [node.text.decode("utf-8")]
+        if node.type == "attribute":
+            obj = self._get_method_chain_name(node.child_by_field_name("object"))
+            attr_node = node.child_by_field_name("attribute")
+            attr = attr_node.text.decode("utf-8") if attr_node else ""
+            return obj + [attr] if attr else obj
+        if node.type == "call":
+            return self._get_method_chain_name(node.child_by_field_name("function"))
+        return []
+
+    def _get_first_string_arg(self, node: Any) -> Optional[str]:
+        """Extract the string value of the first argument if it's a string literal."""
+        args_node = node.child_by_field_name("arguments")
+        if not args_node or not getattr(args_node, "named_children", []):
+            return None
+            
+        for child in args_node.named_children:
+            # handle regular positional args
+            if child.type == "string":
+                # strip quotes
+                text = child.text.decode("utf-8")
+                return text[1:-1] if len(text) >= 2 else text
+            # handle keyword args like path='...'
+            if child.type == "keyword_argument":
+                val = child.child_by_field_name("value")
+                if val and val.type == "string":
+                    text = val.text.decode("utf-8")
+                    return text[1:-1] if len(text) >= 2 else text
+            # return None if the first arg is not a static string (e.g. a variable)
+            return None
+        return None
 
     def _extract_python_classes(self, root: Any, source: str) -> List[str]:
         """Extract class names with inheritance from Python AST."""

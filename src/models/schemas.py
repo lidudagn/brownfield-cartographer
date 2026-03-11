@@ -137,6 +137,9 @@ class ModuleNode(BaseModel):
     called_macros: List[str] = Field(default_factory=list)
     classes: List[str] = Field(default_factory=list)
     cte_definitions: List[str] = Field(default_factory=list)
+    datasets_read: List[str] = Field(default_factory=list)
+    datasets_written: List[str] = Field(default_factory=list)
+    dag_metadata: Dict[str, Any] = Field(default_factory=dict)
     lines_of_code: int = 0
     comment_ratio: float = Field(
         default=0.0,

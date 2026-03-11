@@ -174,6 +174,27 @@ def detect_entry_points(
                 if "DAG(" in content or "@dag" in content:
                     mod.is_entry_point = True
                     mod.entry_point_type = "dag"
+                    
+                    # Extract common metadata
+                    meta = {}
+                    
+                    schedule_match = re.search(r'schedule_interval\s*=\s*(["\'][^"\']+["\']|@\w+|None)', content)
+                    if schedule_match:
+                        meta['schedule_interval'] = schedule_match.group(1).strip("'\"")
+                        
+                    retries_match = re.search(r'[\'"]retries[\'"]\s*:\s*(\d+)', content)
+                    if retries_match:
+                        meta['retries'] = int(retries_match.group(1))
+                        
+                    owner_match = re.search(r'[\'"]owner[\'"]\s*:\s*[\'"]([^\'"]+)[\'"]', content)
+                    if owner_match:
+                        meta['owner'] = owner_match.group(1)
+                        
+                    start_date_match = re.search(r'[\'"]start_date[\'"]\s*:\s*([^\,]+)', content)
+                    if start_date_match:
+                        meta['start_date'] = start_date_match.group(1).strip()
+                        
+                    mod.dag_metadata = meta
                     continue
                     
                 # 4. python __main__ 
