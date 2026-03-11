@@ -172,6 +172,7 @@ class DatasetNode(BaseModel):
     node_id: str
     name: str
     node_type: Literal["dataset"] = "dataset"
+    model_config = ConfigDict(extra="forbid")
     storage_type: Literal["table", "file", "stream", "api", "seed"]
     schema_snapshot: Dict[str, str] = Field(
         default_factory=dict,
@@ -189,6 +190,8 @@ class DatasetNode(BaseModel):
 
 class FunctionNode(BaseModel):
     """Represents a single function or method extracted from a Python module."""
+
+    model_config = ConfigDict(extra="forbid")
 
     qualified_name: str
     parent_module: str
@@ -208,6 +211,7 @@ class TransformationNode(BaseModel):
     node_id: str
     name: str
     node_type: Literal["transformation"] = "transformation"
+    model_config = ConfigDict(extra="forbid")
     source_datasets: List[str]
     target_datasets: List[str]
     transformation_type: Literal[
