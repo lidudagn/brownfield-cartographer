@@ -6,3 +6,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+cartography_out/
+.env
+.cartography_jaffle/
+.cartography_jaffle_v2/
