@@ -81,13 +81,12 @@ def apply_80_20_velocity(modules: List[ModuleNode]) -> None:
     # Sort modules descending by velocity score
     sorted_mods = sorted(modules, key=lambda m: m.change_velocity_30d, reverse=True)
 
-    # Flag top 20%
+    # Flag top 20% — stored in dag_metadata to avoid polluting domain_cluster
     top_n = max(1, int(len(sorted_mods) * 0.2))
     high_velocity_paths: Set[str] = set()
     for mod in sorted_mods[:top_n]:
         if mod.change_velocity_30d > 0:
-            existing = mod.domain_cluster or ""
-            mod.domain_cluster = f"HIGH_VELOCITY|{existing}" if existing else "HIGH_VELOCITY"
+            mod.dag_metadata["is_high_velocity"] = True
             high_velocity_paths.add(mod.path)
 
     if high_velocity_paths:
@@ -106,9 +105,31 @@ def apply_80_20_velocity(modules: List[ModuleNode]) -> None:
 def suggest_cycle_resolution(
     cycle: List[str], graph: nx.DiGraph
 ) -> str:
-    """Analyze cycle and suggest fix based on materials or recent refs."""
-    # Assuming dbt defaults to view. A complete fix looks at materializations
-    return f"Review refs breaking cycle: {cycle[0]} → {cycle[1]}."
+    """Analyze cycle and suggest breaking at the weakest edge (lowest PageRank target)."""
+    if len(cycle) < 2:
+        return "Trivial self-loop; remove self-import."
+
+    # Find the edge whose target has the lowest PageRank
+    # Breaking the dep on the least-important node disrupts the least
+    weakest_target = cycle[0]
+    weakest_score = float("inf")
+    weakest_source = cycle[-1]
+
+    for i in range(len(cycle)):
+        src = cycle[i]
+        tgt = cycle[(i + 1) % len(cycle)]
+        pr = graph.nodes.get(tgt, {}).get("pagerank", 0.0)
+        if pr < weakest_score:
+            weakest_score = pr
+            weakest_target = tgt
+            weakest_source = src
+
+    return (
+        f"Break the dependency from `{Path(weakest_source).name}` → `{Path(weakest_target).name}` "
+        f"(PageRank {weakest_score:.4f}). Consider extracting shared logic into a "
+        f"new module or using dependency injection to decouple the cycle: "
+        f"{' → '.join(Path(p).name for p in cycle)}."
+    )
 
 
 def detect_circular_dependencies(graph: nx.DiGraph) -> List[CircularDependency]:
@@ -159,14 +180,15 @@ def calculate_dead_code_confidence(
         confidence += 0.3
         reasons.append("No changes in the last 30 days")
 
-    # 3. No tests (using basic heuristic for demonstration) - 0.2
-    # In a real run, we'd check if any node of type "test" links to it
+    # 3. No tests referencing this module - 0.2
+    # Check incoming edges (predecessors) for test files that import this module
     factors["no_tests"] = True
-    for src, tgt in graph.edges(module.path):
-        src_mod = graph.nodes.get(src, {}).get("node")
-        if src_mod and getattr(src_mod, "entry_point_type", None) == "test":
-            factors["no_tests"] = False
-            break
+    if module.path in graph:
+        for predecessor in graph.predecessors(module.path):
+            pred_mod = graph.nodes.get(predecessor, {}).get("node")
+            if pred_mod and getattr(pred_mod, "entry_point_type", None) == "test":
+                factors["no_tests"] = False
+                break
     if factors["no_tests"]:
         confidence += 0.2
         reasons.append("No test files reference it")
