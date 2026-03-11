@@ -140,6 +140,10 @@ class ModuleNode(BaseModel):
     datasets_read: List[str] = Field(default_factory=list)
     datasets_written: List[str] = Field(default_factory=list)
     dag_metadata: Dict[str, Any] = Field(default_factory=dict)
+    doc_drift: bool = Field(
+        default=False,
+        description="True if the implementation contradicts the docstring.",
+    )
     lines_of_code: int = 0
     comment_ratio: float = Field(
         default=0.0,
@@ -430,3 +434,27 @@ class CodebaseGraph(BaseModel):
     dead_code_candidates: List[DeadCodeCandidate] = Field(default_factory=list)
     circular_dependencies: List[CircularDependency] = Field(default_factory=list)
     analysis_errors: List[AnalysisError] = Field(default_factory=list)
+
+
+# =============================================================================
+# Semanticist LLM Structured Outputs
+# =============================================================================
+
+class LLMEvidence(BaseModel):
+    """Specific evidence citation mapping to file paths and line numbers."""
+    file: str
+    line: int
+
+class DayOneAnswer(BaseModel):
+    """Enforced structured output for answering FDE Day-One questions."""
+    question: str
+    answer: str
+    evidence: List[LLMEvidence] = Field(default_factory=list)
+
+class ContextWindowBudget(BaseModel):
+    """Token usage tracking across different model tiers."""
+    bulk_input_tokens: int = 0
+    bulk_output_tokens: int = 0
+    synthesis_input_tokens: int = 0
+    synthesis_output_tokens: int = 0
+    estimated_cost_usd: float = 0.0
