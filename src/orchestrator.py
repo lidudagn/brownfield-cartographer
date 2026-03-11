@@ -19,6 +19,7 @@ from __future__ import annotations
 import glob
 import json
 import logging
+import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
@@ -37,10 +38,16 @@ from src.agents.surveyor import (
     run_pagerank,
 )
 from src.agents.hydrologist import Hydrologist
-from src.agents.semanticist import SemanticistAgent
+try:
+    from src.agents.semanticist import SemanticistAgent
+    _HAS_SEMANTICIST = True
+except ImportError:
+    _HAS_SEMANTICIST = False
 from src.analyzers.dag_config_parser import (
     detect_entry_points,
+    detect_schema_drift,
     parse_dbt_project,
+    parse_model_yaml,
     parse_sources,
 )
 from src.analyzers.sql_lineage import (
@@ -208,12 +215,51 @@ def run_analysis(
     # Step 5: Entry Point Detection (F-9)
     detect_entry_points(modules, dbt_config, repo_path)
 
+    # Step 5.5: Schema Drift Detection — compare SQL vs YAML columns
+    schema_drifts = []
+    for mod in sql_modules:
+        model_name = Path(mod.path).stem
+        # Find corresponding YAML config
+        yaml_candidates = list(repo.glob(f"**/{model_name}.yml"))
+        if not yaml_candidates:
+            continue
+        model_yaml = parse_model_yaml(str(yaml_candidates[0]))
+        yaml_columns = []
+        for m_def in model_yaml.models:
+            if m_def.name == model_name:
+                yaml_columns = [c.name for c in m_def.columns]
+                break
+        # Get SQL output columns from column lineage
+        sql_columns = list(set(
+            cl.target_column for cl in lineages if cl.source_file == mod.path
+        ))
+        if yaml_columns and sql_columns:
+            drifts = detect_schema_drift(sql_columns, yaml_columns, mod.path, str(yaml_candidates[0]))
+            schema_drifts.extend(drifts)
+    if schema_drifts:
+        logger.warning(f"Schema drift detected: {len(schema_drifts)} column mismatches")
+        for drift in schema_drifts[:5]:
+            logger.warning(f"  {drift['column']}: {drift['issue']} ({drift['sql_file']} vs {drift['yaml_file']})")
+
     # Step 6: Git Velocity (F-3, R-1)
     for mod in tqdm(modules, desc="Git Velocity"):
         vel_data = extract_git_velocity(repo_path, mod.path, days=days)
         mod.change_velocity_30d = vel_data["velocity_score"]
         
     apply_80_20_velocity(modules)
+
+    # Step 6.5: Populate last_modified from git log
+    for mod in modules:
+        try:
+            result = subprocess.run(
+                ["git", "log", "-1", "--format=%aI", "--", mod.path],
+                capture_output=True, text=True, cwd=repo_path,
+            )
+            date_str = result.stdout.strip()
+            if date_str:
+                mod.last_modified = date_str
+        except Exception:
+            pass
 
     # Step 7: Build Module Graph
     G, imports_edges, calls_edges = build_module_graph(modules, repo_path=repo_path)
@@ -288,11 +334,22 @@ def run_analysis(
         if mod.language == "python":
             for func_sig in mod.public_functions:
                 func_name = func_sig.split("(")[0] if "(" in func_sig else func_sig
+                # Count how many other modules reference this function
+                call_count = 0
+                for other_mod in modules:
+                    if other_mod.path != mod.path:
+                        try:
+                            other_src = (repo / other_mod.path).read_text(encoding="utf-8")
+                            if func_name in other_src:
+                                call_count += 1
+                        except OSError:
+                            pass
                 function_nodes.append(FunctionNode(
                     qualified_name=f"{mod.path}::{func_name}",
                     parent_module=mod.path,
                     signature=func_sig,
                     is_public_api=True,
+                    call_count_within_repo=call_count,
                 ))
 
     # Step 9.8: Create ConfiguresEdges from YAML → model relationships
@@ -323,7 +380,7 @@ def run_analysis(
 
     # Step 10: Serialization & Vis (F-8, M-11)
     cg = CodebaseGraph(
-        repo_path=str(repo.resolve()),
+        repo_path=str(repo.name),  # Use repo basename, not absolute path
         analysis_timestamp=datetime.now().isoformat(),
         modules=modules,
         datasets=datasets,
@@ -351,23 +408,115 @@ def run_analysis(
     logger.info(f"Data sinks: {sinks}")
     
     # Step 11.5: Wire Semanticist — populate purpose statements, domain clusters, and answer Day-One questions
-    semanticist = SemanticistAgent(repo_root=repo_path)
-    semanticist.run(cg)
-    day_one_answers = semanticist.answer_day_one_questions(cg)
+    day_one_answers = []
+    if _HAS_SEMANTICIST:
+        try:
+            semanticist = SemanticistAgent(repo_root=repo_path)
+            semanticist.run(cg)
+            day_one_answers = semanticist.answer_day_one_questions(cg)
+        except Exception as e:
+            logger.warning(f"Semanticist failed (non-fatal): {e}")
+    else:
+        logger.info("SemanticistAgent not available (missing deps). Skipping.")
     
     # Save Day-One answers to onboarding_brief.md
     brief_path = out / "onboarding_brief.md"
     try:
         with open(brief_path, "w", encoding="utf-8") as f:
-            f.write("# FDE Day-One Brief\n\nGenerated by The Brownfield Cartographer Semanticist Agent.\n\n")
-            for ans in day_one_answers:
-                f.write(f"## Question: {ans.question}\n\n**Answer**:\n{ans.answer}\n\n**Evidence**:\n")
-                if ans.evidence:
-                    for ev in ans.evidence:
-                        f.write(f"- `{ev.file}:{ev.line}`\n")
-                else:
-                    f.write("- No specific evidence cited.\n")
+            f.write("# FDE Day-One Brief\n\nGenerated by The Brownfield Cartographer.\n\n")
+            
+            if day_one_answers:
+                # LLM-generated answers
+                for ans in day_one_answers:
+                    f.write(f"## Question: {ans.question}\n\n**Answer**:\n{ans.answer}\n\n**Evidence**:\n")
+                    if ans.evidence:
+                        for ev in ans.evidence:
+                            f.write(f"- `{ev.file}:{ev.line}`\n")
+                    else:
+                        f.write("- No specific evidence cited.\n")
+                    f.write("\n---\n\n")
+            else:
+                # Static fallback from analysis data
+                logger.info("Generating static Day-One Brief from analysis data (LLM unavailable).")
+                
+                # Q1: Primary data ingestion path
+                f.write("## 1. What is the primary data ingestion path?\n\n")
+                source_nodes = [s for s in sources if "source:" in s.lower() or "seed" in s.lower() or s.startswith("dataset:")]
+                staging_mods = [m for m in modules if "staging" in m.path.lower() or "stg_" in m.path.lower()]
+                if source_nodes:
+                    f.write(f"**Sources identified ({len(source_nodes)}):**\n")
+                    for s in source_nodes[:10]:
+                        f.write(f"- `{s}`\n")
+                if staging_mods:
+                    f.write(f"\n**Staging models ({len(staging_mods)}):**\n")
+                    for m in staging_mods:
+                        f.write(f"- `{m.path}`\n")
                 f.write("\n---\n\n")
+                
+                # Q2: Most critical output datasets
+                f.write("## 2. What are the 3-5 most critical output datasets?\n\n")
+                critical = sorted(modules, key=lambda m: m.pagerank, reverse=True)[:5]
+                for i, m in enumerate(critical, 1):
+                    f.write(f"{i}. **`{m.path}`** — PageRank: {m.pagerank:.4f}")
+                    if m.purpose_statement:
+                        f.write(f" — {m.purpose_statement}")
+                    f.write("\n")
+                f.write("\n---\n\n")
+                
+                # Q3: Blast radius of most critical module
+                f.write("## 3. What is the blast radius if the most critical module fails?\n\n")
+                if critical:
+                    top_mod = critical[0]
+                    # Find matching transformation or dataset node
+                    top_stem = Path(top_mod.path).stem
+                    blast_node = None
+                    for candidate in [f"transformation:{top_stem}", f"dataset:{top_stem}"]:
+                        if candidate in hydro.graph:
+                            blast_node = candidate
+                            break
+                    if blast_node:
+                        radius = hydro.blast_radius(blast_node)
+                        f.write(f"**Module:** `{top_mod.path}` (node: `{blast_node}`)\n\n")
+                        f.write(f"**Downstream impact:** {len(radius)} nodes affected\n\n")
+                        if radius:
+                            for node, dist in sorted(radius.items(), key=lambda x: x[1]):
+                                f.write(f"- `{node}` (distance: {dist})\n")
+                    else:
+                        f.write(f"**Module:** `{top_mod.path}` (no matching lineage node)\n")
+                f.write("\n---\n\n")
+                
+                # Q4: Where is business logic concentrated?
+                f.write("## 4. Where is the business logic concentrated vs. distributed?\n\n")
+                by_dir: Dict[str, List] = {}
+                for m in modules:
+                    d = str(Path(m.path).parent)
+                    by_dir.setdefault(d, []).append(m)
+                for d in sorted(by_dir, key=lambda k: sum(m.complexity_score for m in by_dir[k]), reverse=True)[:5]:
+                    total_cx = sum(m.complexity_score for m in by_dir[d])
+                    f.write(f"- **`{d}/`** — {len(by_dir[d])} files, total complexity: {total_cx}\n")
+                entry_pts = [m for m in modules if m.is_entry_point]
+                f.write(f"\n**Entry points:** {len(entry_pts)} detected\n")
+                for ep in entry_pts:
+                    f.write(f"- `{ep.path}` (type: {ep.entry_point_type})\n")
+                f.write("\n---\n\n")
+                
+                # Q5: Git velocity
+                f.write("## 5. What has changed most frequently in the last 30 days?\n\n")
+                high_vel = sorted(modules, key=lambda m: m.change_velocity_30d, reverse=True)[:10]
+                if any(m.change_velocity_30d > 0 for m in high_vel):
+                    f.write("| File | Velocity (unique days/30d) | Last Modified |\n")
+                    f.write("|:-----|:-------------------------:|:--------------|\n")
+                    for m in high_vel:
+                        if m.change_velocity_30d > 0:
+                            f.write(f"| `{m.path}` | {m.change_velocity_30d:.2f} | {m.last_modified or 'N/A'} |\n")
+                else:
+                    f.write("No files changed in the last 30 days (this may be an archived/stable repository).\n\n")
+                    f.write("**Most recently modified files:**\n")
+                    recent = sorted([m for m in modules if m.last_modified], key=lambda m: m.last_modified or "", reverse=True)[:5]
+                    for m in recent:
+                        f.write(f"- `{m.path}` — last modified: {m.last_modified}\n")
+                f.write("\n")
+                
         logger.info(f"Saved Day-One answers to {brief_path}")
     except Exception as e:
         logger.error(f"Failed to write onboarding brief: {e}")
@@ -384,10 +533,10 @@ def run_analysis(
     trace_entries.append({"action": "ast_parsing", "modules_parsed": len(modules), "parse_errors": sum(1 for m in modules if not m.is_complete_parse), "timestamp": datetime.now().isoformat()})
     trace_entries.append({"action": "sql_lineage", "sql_files_analyzed": len(sql_modules), "column_lineages_extracted": len(lineages), "unresolved_refs": len(unresolved_refs), "timestamp": datetime.now().isoformat()})
     trace_entries.append({"action": "entry_point_detection", "entry_points": len([m for m in modules if m.is_entry_point]), "timestamp": datetime.now().isoformat()})
-    trace_entries.append({"action": "git_velocity", "high_velocity_files": len([m for m in modules if m.domain_cluster and "HIGH_VELOCITY" in m.domain_cluster]), "timestamp": datetime.now().isoformat()})
+    trace_entries.append({"action": "git_velocity", "high_velocity_files": len([m for m in modules if m.dag_metadata.get("is_high_velocity")]), "timestamp": datetime.now().isoformat()})
     trace_entries.append({"action": "graph_analysis", "nodes": G.number_of_nodes(), "edges": G.number_of_edges(), "circular_deps": len(cycles), "dead_code_candidates": len(dead_code), "timestamp": datetime.now().isoformat()})
     trace_entries.append({"action": "hydrologist", "lineage_nodes": lineage_stats["num_nodes"], "lineage_edges": lineage_stats["num_edges"], "sources": len(sources), "sinks": len(sinks), "timestamp": datetime.now().isoformat()})
-    trace_entries.append({"action": "serialization", "output_dir": output_dir, "duration_seconds": round(time.time() - start_time, 2), "timestamp": datetime.now().isoformat()})
+    trace_entries.append({"action": "serialization", "output_dir": str(out.name), "duration_seconds": round(time.time() - start_time, 2), "timestamp": datetime.now().isoformat()})
     
     trace_path = out / "cartography_trace.jsonl"
     with open(trace_path, "w", encoding="utf-8") as f:
