@@ -72,3 +72,22 @@ def load_plugin(name):
     assert "importlib" in imports
     assert len(unresolved) == 2
     assert unresolved[0].ref_type == "dynamic_import"
+
+def test_python_data_flows():
+    """Verify PySpark and Pandas method chains extract read/write datasets."""
+    analyzer = TreeSitterAnalyzer()
+    source = """
+import pandas as pd
+df = pd.read_csv("data/input.csv")
+df.to_parquet("data/output.parquet")
+
+spark_df = spark.read.format("json").load("s3://bucket/raw_events")
+spark_df.write.mode("overwrite").saveAsTable("analytics.events")
+"""
+    analyzer._file_cache["test_flows.py"] = source
+    node = analyzer._analyze_python("test_flows.py", source, ".")
+    
+    assert "data/input.csv" in node.datasets_read
+    assert "s3://bucket/raw_events" in node.datasets_read
+    assert "data/output.parquet" in node.datasets_written
+    assert "analytics.events" in node.datasets_written
