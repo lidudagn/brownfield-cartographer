@@ -380,7 +380,7 @@ def run_analysis(
 
     # Step 10: Serialization & Vis (F-8, M-11)
     cg = CodebaseGraph(
-        repo_path=str(repo.name),  # Use repo basename, not absolute path
+        repo_path=repo_path,  # Use the path as provided by the user
         analysis_timestamp=datetime.now().isoformat(),
         modules=modules,
         datasets=datasets,

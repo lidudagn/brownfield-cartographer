@@ -14,18 +14,18 @@
       "models/marts/products.sql"
     ],
     "entry_points": [
-      "models/marts/metricflow_time_spine.sql",
-      "models/marts/orders.sql",
-      "models/marts/products.sql",
-      "models/marts/customers.sql",
-      "models/marts/locations.sql",
-      "models/marts/supplies.sql",
       "models/marts/order_items.sql",
+      "models/marts/orders.sql",
+      "models/marts/metricflow_time_spine.sql",
+      "models/marts/customers.sql",
+      "models/marts/products.sql",
+      "models/marts/supplies.sql",
+      "models/marts/locations.sql",
       "seeds/jaffle-data/raw_products.csv",
-      "seeds/jaffle-data/raw_orders.csv",
-      "seeds/jaffle-data/raw_customers.csv",
       "seeds/jaffle-data/raw_supplies.csv",
       "seeds/jaffle-data/raw_stores.csv",
+      "seeds/jaffle-data/raw_customers.csv",
+      "seeds/jaffle-data/raw_orders.csv",
       "seeds/jaffle-data/raw_items.csv"
     ]
   },
