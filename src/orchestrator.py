@@ -17,6 +17,7 @@ Wires all parsers and analyzers into a 10-step pipeline:
 from __future__ import annotations
 
 import glob
+import json
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -35,6 +36,7 @@ from src.agents.surveyor import (
     extract_git_velocity,
     run_pagerank,
 )
+from src.agents.hydrologist import Hydrologist
 from src.analyzers.dag_config_parser import (
     detect_entry_points,
     parse_dbt_project,
@@ -49,10 +51,12 @@ from src.graph.knowledge_graph import KnowledgeGraphWrapped
 from src.models.schemas import (
     AnalysisCheckpoint,
     CodebaseGraph,
+    ConfiguresEdge,
     DatasetNode,
     DbtProjectConfig,
     DeadCodeCandidate,
     Evidence,
+    FunctionNode,
     ImportsEdge,
     CallsEdge,
     ProducesEdge,
@@ -277,29 +281,95 @@ def run_analysis(
                 evidence=Evidence(file_path=t.source_file, line_start=start_line, line_end=start_line, snippet=snippet, analysis_method="sqlglot")
             ))
 
+    # Step 9.7: Populate FunctionNodes from Python modules
+    function_nodes = []
+    for mod in modules:
+        if mod.language == "python":
+            for func_sig in mod.public_functions:
+                func_name = func_sig.split("(")[0] if "(" in func_sig else func_sig
+                function_nodes.append(FunctionNode(
+                    qualified_name=f"{mod.path}::{func_name}",
+                    parent_module=mod.path,
+                    signature=func_sig,
+                    is_public_api=True,
+                ))
+
+    # Step 9.8: Create ConfiguresEdges from YAML → model relationships
+    configures_edges = []
+    for mod in modules:
+        if mod.language == "yaml":
+            for imp in mod.imports:
+                if imp.startswith("configures:"):
+                    model_name = imp.replace("configures:", "")
+                    # Find the target module
+                    target_path = None
+                    for m in modules:
+                        if Path(m.path).stem == model_name:
+                            target_path = m.path
+                            break
+                    if target_path:
+                        configures_edges.append(ConfiguresEdge(
+                            source=mod.path,
+                            target=target_path,
+                            evidence=Evidence(
+                                file_path=mod.path,
+                                line_start=1,
+                                line_end=1,
+                                snippet=f"configures model: {model_name}",
+                                analysis_method="yaml_parse",
+                            ),
+                        ))
+
     # Step 10: Serialization & Vis (F-8, M-11)
     cg = CodebaseGraph(
         repo_path=str(repo.resolve()),
         analysis_timestamp=datetime.now().isoformat(),
         modules=modules,
         datasets=datasets,
-        functions=[],  # We have functions in ModuleNode.public_functions
+        functions=function_nodes,
         transformations=transformations,
         imports_edges=imports_edges,
         calls_edges=calls_edges,
         produces_edges=produces_edges,
         consumes_edges=consumes_edges,
+        configures_edges=configures_edges,
         unresolved_refs=unresolved_refs,
         dead_code_candidates=dead_code,
         circular_dependencies=cycles,
         analysis_errors=[]  # Gathered per module
     )
     
+    # Step 11: Wire Hydrologist — build lineage graph and run analytics
+    hydro = Hydrologist()
+    hydro.build_lineage_graph(cg)
+    lineage_stats = hydro.get_statistics()
+    sources = hydro.find_sources()
+    sinks = hydro.find_sinks()
+    logger.info(f"Lineage stats: {lineage_stats}")
+    logger.info(f"Data sources: {sources}")
+    logger.info(f"Data sinks: {sinks}")
+    
     wrapper = KnowledgeGraphWrapped(cg)
     png_path = out / "module_graph.png"
     
     wrapper.save_artifacts(out)
     wrapper.visualize(png_path)
+    
+    # Step 12: Cartography Trace (audit log)
+    trace_entries = []
+    trace_entries.append({"action": "file_discovery", "files_found": len(files), "timestamp": datetime.now().isoformat()})
+    trace_entries.append({"action": "ast_parsing", "modules_parsed": len(modules), "parse_errors": sum(1 for m in modules if not m.is_complete_parse), "timestamp": datetime.now().isoformat()})
+    trace_entries.append({"action": "sql_lineage", "sql_files_analyzed": len(sql_modules), "column_lineages_extracted": len(lineages), "unresolved_refs": len(unresolved_refs), "timestamp": datetime.now().isoformat()})
+    trace_entries.append({"action": "entry_point_detection", "entry_points": len([m for m in modules if m.is_entry_point]), "timestamp": datetime.now().isoformat()})
+    trace_entries.append({"action": "git_velocity", "high_velocity_files": len([m for m in modules if m.domain_cluster and "HIGH_VELOCITY" in m.domain_cluster]), "timestamp": datetime.now().isoformat()})
+    trace_entries.append({"action": "graph_analysis", "nodes": G.number_of_nodes(), "edges": G.number_of_edges(), "circular_deps": len(cycles), "dead_code_candidates": len(dead_code), "timestamp": datetime.now().isoformat()})
+    trace_entries.append({"action": "hydrologist", "lineage_nodes": lineage_stats["num_nodes"], "lineage_edges": lineage_stats["num_edges"], "sources": len(sources), "sinks": len(sinks), "timestamp": datetime.now().isoformat()})
+    trace_entries.append({"action": "serialization", "output_dir": output_dir, "duration_seconds": round(time.time() - start_time, 2), "timestamp": datetime.now().isoformat()})
+    
+    trace_path = out / "cartography_trace.jsonl"
+    with open(trace_path, "w", encoding="utf-8") as f:
+        for entry in trace_entries:
+            f.write(json.dumps(entry) + "\n")
     
     duration = time.time() - start_time
     logger.info(f"Analysis complete in {duration:.2f}s. Saved to {output_dir}")

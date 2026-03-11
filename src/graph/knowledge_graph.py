@@ -133,6 +133,9 @@ class KnowledgeGraphWrapped:
         """Serialize CodebaseGraph into distinct JSON artifacts for downstream agents."""
         out_dir.mkdir(parents=True, exist_ok=True)
         
+        # 0. module_graph.json (full CodebaseGraph — required deliverable)
+        self.save(out_dir / "module_graph.json")
+        
         # 1. modules.json
         md_data = {
             "repo_path": self.codebase.repo_path,
@@ -164,7 +167,16 @@ class KnowledgeGraphWrapped:
         }
         (out_dir / "edges.json").write_text(json.dumps(ed_data, indent=2), encoding="utf-8")
         
-        # 4. analysis_report.json
+        # 5. lineage_graph.json (required deliverable — transformations + lineage edges)
+        lineage_data = {
+            "transformations": [t.model_dump() for t in self.codebase.transformations],
+            "datasets": [d.model_dump() for d in self.codebase.datasets],
+            "produces_edges": [e.model_dump() for e in self.codebase.produces_edges],
+            "consumes_edges": [e.model_dump() for e in self.codebase.consumes_edges],
+        }
+        (out_dir / "lineage_graph.json").write_text(json.dumps(lineage_data, indent=2), encoding="utf-8")
+        
+        # 6. analysis_report.json
         ar_data = {
             "summary": {
                 "modules_analyzed": len(self.codebase.modules),

@@ -1,0 +1,1149 @@
+{
+  "transformations": [
+    {
+      "node_id": "transformation:locations",
+      "name": "locations",
+      "node_type": "transformation",
+      "source_datasets": [
+        "stg_locations"
+      ],
+      "target_datasets": [
+        "dataset:locations"
+      ],
+      "transformation_type": "select",
+      "source_file": "models/marts/locations.sql",
+      "line_range": [
+        1,
+        9
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": [
+        {
+          "target_column": "*",
+          "source_columns": [],
+          "transformation": "wildcard_passthrough",
+          "expression": "*",
+          "source_file": "models/marts/locations.sql",
+          "line_range": [
+            5,
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "node_id": "transformation:supplies",
+      "name": "supplies",
+      "node_type": "transformation",
+      "source_datasets": [
+        "stg_supplies"
+      ],
+      "target_datasets": [
+        "dataset:supplies"
+      ],
+      "transformation_type": "select",
+      "source_file": "models/marts/supplies.sql",
+      "line_range": [
+        1,
+        9
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": [
+        {
+          "target_column": "*",
+          "source_columns": [],
+          "transformation": "wildcard_passthrough",
+          "expression": "*",
+          "source_file": "models/marts/supplies.sql",
+          "line_range": [
+            5,
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "node_id": "transformation:orders",
+      "name": "orders",
+      "node_type": "transformation",
+      "source_datasets": [
+        "order_items",
+        "stg_orders"
+      ],
+      "target_datasets": [
+        "dataset:orders"
+      ],
+      "transformation_type": "select",
+      "source_file": "models/marts/orders.sql",
+      "line_range": [
+        1,
+        77
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": [
+        {
+          "target_column": "*",
+          "source_columns": [],
+          "transformation": "wildcard_passthrough",
+          "expression": "*",
+          "source_file": "models/marts/orders.sql",
+          "line_range": [
+            5,
+            5
+          ]
+        },
+        {
+          "target_column": "order_id",
+          "source_columns": [
+            "order_id"
+          ],
+          "transformation": "passthrough",
+          "expression": "order_id",
+          "source_file": "models/marts/orders.sql",
+          "line_range": [
+            18,
+            18
+          ]
+        },
+        {
+          "target_column": "order_cost",
+          "source_columns": [
+            "supply_cost"
+          ],
+          "transformation": "aggregate",
+          "expression": "SUM(supply_cost)",
+          "source_file": "models/marts/orders.sql",
+          "line_range": [
+            20,
+            20
+          ]
+        },
+        {
+          "target_column": "order_items_subtotal",
+          "source_columns": [
+            "product_price"
+          ],
+          "transformation": "aggregate",
+          "expression": "SUM(product_price)",
+          "source_file": "models/marts/orders.sql",
+          "line_range": [
+            21,
+            21
+          ]
+        },
+        {
+          "target_column": "count_order_items",
+          "source_columns": [
+            "order_item_id"
+          ],
+          "transformation": "aggregate",
+          "expression": "COUNT(order_item_id)",
+          "source_file": "models/marts/orders.sql",
+          "line_range": [
+            22,
+            22
+          ]
+        },
+        {
+          "target_column": "count_food_items",
+          "source_columns": [
+            "is_food_item"
+          ],
+          "transformation": "aggregate",
+          "expression": "SUM(CASE WHEN is_food_item THEN 1 ELSE 0 END)",
+          "source_file": "models/marts/orders.sql",
+          "line_range": [
+            25,
+            25
+          ]
+        },
+        {
+          "target_column": "count_drink_items",
+          "source_columns": [
+            "is_drink_item"
+          ],
+          "transformation": "aggregate",
+          "expression": "SUM(CASE WHEN is_drink_item THEN 1 ELSE 0 END)",
+          "source_file": "models/marts/orders.sql",
+          "line_range": [
+            31,
+            31
+          ]
+        },
+        {
+          "target_column": "is_food_order",
+          "source_columns": [
+            "order_items_summary.count_food_items"
+          ],
+          "transformation": "compute",
+          "expression": "order_items_summary.count_food_items > 0",
+          "source_file": "models/marts/orders.sql",
+          "line_range": [
+            49,
+            49
+          ]
+        },
+        {
+          "target_column": "is_drink_order",
+          "source_columns": [
+            "order_items_summary.count_drink_items"
+          ],
+          "transformation": "compute",
+          "expression": "order_items_summary.count_drink_items > 0",
+          "source_file": "models/marts/orders.sql",
+          "line_range": [
+            50,
+            50
+          ]
+        },
+        {
+          "target_column": "customer_order_number",
+          "source_columns": [
+            "customer_id",
+            "ordered_at"
+          ],
+          "transformation": "window",
+          "expression": "ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at ASC)",
+          "source_file": "models/marts/orders.sql",
+          "line_range": [
+            69,
+            69
+          ]
+        }
+      ]
+    },
+    {
+      "node_id": "transformation:order_items",
+      "name": "order_items",
+      "node_type": "transformation",
+      "source_datasets": [
+        "stg_supplies",
+        "stg_products",
+        "stg_orders",
+        "stg_order_items"
+      ],
+      "target_datasets": [
+        "dataset:order_items"
+      ],
+      "transformation_type": "select",
+      "source_file": "models/marts/order_items.sql",
+      "line_range": [
+        1,
+        66
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": [
+        {
+          "target_column": "*",
+          "source_columns": [],
+          "transformation": "wildcard_passthrough",
+          "expression": "*",
+          "source_file": "models/marts/order_items.sql",
+          "line_range": [
+            5,
+            5
+          ]
+        },
+        {
+          "target_column": "product_id",
+          "source_columns": [
+            "product_id"
+          ],
+          "transformation": "passthrough",
+          "expression": "product_id",
+          "source_file": "models/marts/order_items.sql",
+          "line_range": [
+            31,
+            31
+          ]
+        },
+        {
+          "target_column": "supply_cost",
+          "source_columns": [
+            "supply_cost"
+          ],
+          "transformation": "aggregate",
+          "expression": "SUM(supply_cost)",
+          "source_file": "models/marts/order_items.sql",
+          "line_range": [
+            33,
+            33
+          ]
+        },
+        {
+          "target_column": "ordered_at",
+          "source_columns": [
+            "orders.ordered_at"
+          ],
+          "transformation": "passthrough",
+          "expression": "orders.ordered_at",
+          "source_file": "models/marts/order_items.sql",
+          "line_range": [
+            46,
+            46
+          ]
+        },
+        {
+          "target_column": "product_name",
+          "source_columns": [
+            "products.product_name"
+          ],
+          "transformation": "passthrough",
+          "expression": "products.product_name",
+          "source_file": "models/marts/order_items.sql",
+          "line_range": [
+            48,
+            48
+          ]
+        },
+        {
+          "target_column": "product_price",
+          "source_columns": [
+            "products.product_price"
+          ],
+          "transformation": "passthrough",
+          "expression": "products.product_price",
+          "source_file": "models/marts/order_items.sql",
+          "line_range": [
+            49,
+            49
+          ]
+        },
+        {
+          "target_column": "is_food_item",
+          "source_columns": [
+            "products.is_food_item"
+          ],
+          "transformation": "passthrough",
+          "expression": "products.is_food_item",
+          "source_file": "models/marts/order_items.sql",
+          "line_range": [
+            50,
+            50
+          ]
+        },
+        {
+          "target_column": "is_drink_item",
+          "source_columns": [
+            "products.is_drink_item"
+          ],
+          "transformation": "passthrough",
+          "expression": "products.is_drink_item",
+          "source_file": "models/marts/order_items.sql",
+          "line_range": [
+            51,
+            51
+          ]
+        }
+      ]
+    },
+    {
+      "node_id": "transformation:metricflow_time_spine",
+      "name": "metricflow_time_spine",
+      "node_type": "transformation",
+      "source_datasets": [],
+      "target_datasets": [
+        "dataset:metricflow_time_spine"
+      ],
+      "transformation_type": "select",
+      "source_file": "models/marts/metricflow_time_spine.sql",
+      "line_range": [
+        1,
+        19
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": [
+        {
+          "target_column": "*",
+          "source_columns": [],
+          "transformation": "wildcard_passthrough",
+          "expression": "*",
+          "source_file": "models/marts/metricflow_time_spine.sql",
+          "line_range": [
+            19,
+            19
+          ]
+        },
+        {
+          "target_column": "date_day",
+          "source_columns": [
+            "date_day"
+          ],
+          "transformation": "cast",
+          "expression": "CAST(date_day AS DATE)",
+          "source_file": "models/marts/metricflow_time_spine.sql",
+          "line_range": [
+            13,
+            13
+          ]
+        }
+      ]
+    },
+    {
+      "node_id": "transformation:stg_products",
+      "name": "stg_products",
+      "node_type": "transformation",
+      "source_datasets": [
+        "source:ecom.raw_products"
+      ],
+      "target_datasets": [
+        "dataset:stg_products"
+      ],
+      "transformation_type": "select",
+      "source_file": "models/staging/stg_products.sql",
+      "line_range": [
+        1,
+        34
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": [
+        {
+          "target_column": "*",
+          "source_columns": [],
+          "transformation": "wildcard_passthrough",
+          "expression": "*",
+          "source_file": "models/staging/stg_products.sql",
+          "line_range": [
+            5,
+            5
+          ]
+        },
+        {
+          "target_column": "product_id",
+          "source_columns": [
+            "sku"
+          ],
+          "transformation": "passthrough",
+          "expression": "sku",
+          "source_file": "models/staging/stg_products.sql",
+          "line_range": [
+            14,
+            14
+          ]
+        },
+        {
+          "target_column": "product_name",
+          "source_columns": [
+            "name"
+          ],
+          "transformation": "passthrough",
+          "expression": "name",
+          "source_file": "models/staging/stg_products.sql",
+          "line_range": [
+            9,
+            9
+          ]
+        },
+        {
+          "target_column": "product_type",
+          "source_columns": [
+            "type"
+          ],
+          "transformation": "passthrough",
+          "expression": "type",
+          "source_file": "models/staging/stg_products.sql",
+          "line_range": [
+            18,
+            18
+          ]
+        },
+        {
+          "target_column": "product_description",
+          "source_columns": [
+            "description"
+          ],
+          "transformation": "passthrough",
+          "expression": "description",
+          "source_file": "models/staging/stg_products.sql",
+          "line_range": [
+            19,
+            19
+          ]
+        },
+        {
+          "target_column": "product_price",
+          "source_columns": [],
+          "transformation": "compute",
+          "expression": "CENTS_TO_DOLLARS('price')",
+          "source_file": "models/staging/stg_products.sql",
+          "line_range": [
+            23,
+            23
+          ]
+        },
+        {
+          "target_column": "is_food_item",
+          "source_columns": [
+            "type"
+          ],
+          "transformation": "compute",
+          "expression": "COALESCE(type = 'jaffle', FALSE)",
+          "source_file": "models/staging/stg_products.sql",
+          "line_range": [
+            18,
+            18
+          ]
+        },
+        {
+          "target_column": "is_drink_item",
+          "source_columns": [
+            "type"
+          ],
+          "transformation": "compute",
+          "expression": "COALESCE(type = 'beverage', FALSE)",
+          "source_file": "models/staging/stg_products.sql",
+          "line_range": [
+            18,
+            18
+          ]
+        }
+      ]
+    },
+    {
+      "node_id": "transformation:stg_order_items",
+      "name": "stg_order_items",
+      "node_type": "transformation",
+      "source_datasets": [
+        "source:ecom.raw_items"
+      ],
+      "target_datasets": [
+        "dataset:stg_order_items"
+      ],
+      "transformation_type": "select",
+      "source_file": "models/staging/stg_order_items.sql",
+      "line_range": [
+        1,
+        22
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": [
+        {
+          "target_column": "*",
+          "source_columns": [],
+          "transformation": "wildcard_passthrough",
+          "expression": "*",
+          "source_file": "models/staging/stg_order_items.sql",
+          "line_range": [
+            5,
+            5
+          ]
+        },
+        {
+          "target_column": "order_item_id",
+          "source_columns": [
+            "id"
+          ],
+          "transformation": "passthrough",
+          "expression": "id",
+          "source_file": "models/staging/stg_order_items.sql",
+          "line_range": [
+            13,
+            13
+          ]
+        },
+        {
+          "target_column": "order_id",
+          "source_columns": [
+            "order_id"
+          ],
+          "transformation": "passthrough",
+          "expression": "order_id",
+          "source_file": "models/staging/stg_order_items.sql",
+          "line_range": [
+            15,
+            15
+          ]
+        },
+        {
+          "target_column": "product_id",
+          "source_columns": [
+            "sku"
+          ],
+          "transformation": "passthrough",
+          "expression": "sku",
+          "source_file": "models/staging/stg_order_items.sql",
+          "line_range": [
+            16,
+            16
+          ]
+        }
+      ]
+    },
+    {
+      "node_id": "transformation:stg_customers",
+      "name": "stg_customers",
+      "node_type": "transformation",
+      "source_datasets": [
+        "source:ecom.raw_customers"
+      ],
+      "target_datasets": [
+        "dataset:stg_customers"
+      ],
+      "transformation_type": "select",
+      "source_file": "models/staging/stg_customers.sql",
+      "line_range": [
+        1,
+        23
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": [
+        {
+          "target_column": "*",
+          "source_columns": [],
+          "transformation": "wildcard_passthrough",
+          "expression": "*",
+          "source_file": "models/staging/stg_customers.sql",
+          "line_range": [
+            5,
+            5
+          ]
+        },
+        {
+          "target_column": "customer_id",
+          "source_columns": [
+            "id"
+          ],
+          "transformation": "passthrough",
+          "expression": "id",
+          "source_file": "models/staging/stg_customers.sql",
+          "line_range": [
+            13,
+            13
+          ]
+        },
+        {
+          "target_column": "customer_name",
+          "source_columns": [
+            "name"
+          ],
+          "transformation": "passthrough",
+          "expression": "name",
+          "source_file": "models/staging/stg_customers.sql",
+          "line_range": [
+            9,
+            9
+          ]
+        }
+      ]
+    },
+    {
+      "node_id": "transformation:customers",
+      "name": "customers",
+      "node_type": "transformation",
+      "source_datasets": [
+        "orders",
+        "stg_customers"
+      ],
+      "target_datasets": [
+        "dataset:customers"
+      ],
+      "transformation_type": "select",
+      "source_file": "models/marts/customers.sql",
+      "line_range": [
+        1,
+        58
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": [
+        {
+          "target_column": "*",
+          "source_columns": [],
+          "transformation": "wildcard_passthrough",
+          "expression": "*",
+          "source_file": "models/marts/customers.sql",
+          "line_range": [
+            5,
+            5
+          ]
+        },
+        {
+          "target_column": "customer_id",
+          "source_columns": [
+            "orders.customer_id"
+          ],
+          "transformation": "passthrough",
+          "expression": "orders.customer_id",
+          "source_file": "models/marts/customers.sql",
+          "line_range": [
+            18,
+            18
+          ]
+        },
+        {
+          "target_column": "count_lifetime_orders",
+          "source_columns": [
+            "orders.order_id"
+          ],
+          "transformation": "aggregate",
+          "expression": "COUNT(DISTINCT orders.order_id)",
+          "source_file": "models/marts/customers.sql",
+          "line_range": [
+            20,
+            20
+          ]
+        },
+        {
+          "target_column": "is_repeat_buyer",
+          "source_columns": [
+            "orders.order_id"
+          ],
+          "transformation": "aggregate",
+          "expression": "COUNT(DISTINCT orders.order_id) > 1",
+          "source_file": "models/marts/customers.sql",
+          "line_range": [
+            20,
+            20
+          ]
+        },
+        {
+          "target_column": "first_ordered_at",
+          "source_columns": [
+            "orders.ordered_at"
+          ],
+          "transformation": "aggregate",
+          "expression": "MIN(orders.ordered_at)",
+          "source_file": "models/marts/customers.sql",
+          "line_range": [
+            22,
+            22
+          ]
+        },
+        {
+          "target_column": "last_ordered_at",
+          "source_columns": [
+            "orders.ordered_at"
+          ],
+          "transformation": "aggregate",
+          "expression": "MAX(orders.ordered_at)",
+          "source_file": "models/marts/customers.sql",
+          "line_range": [
+            22,
+            22
+          ]
+        },
+        {
+          "target_column": "lifetime_spend_pretax",
+          "source_columns": [
+            "orders.subtotal"
+          ],
+          "transformation": "aggregate",
+          "expression": "SUM(orders.subtotal)",
+          "source_file": "models/marts/customers.sql",
+          "line_range": [
+            24,
+            24
+          ]
+        },
+        {
+          "target_column": "lifetime_tax_paid",
+          "source_columns": [
+            "orders.tax_paid"
+          ],
+          "transformation": "aggregate",
+          "expression": "SUM(orders.tax_paid)",
+          "source_file": "models/marts/customers.sql",
+          "line_range": [
+            25,
+            25
+          ]
+        },
+        {
+          "target_column": "lifetime_spend",
+          "source_columns": [
+            "orders.order_total"
+          ],
+          "transformation": "aggregate",
+          "expression": "SUM(orders.order_total)",
+          "source_file": "models/marts/customers.sql",
+          "line_range": [
+            24,
+            24
+          ]
+        },
+        {
+          "target_column": "customer_type",
+          "source_columns": [
+            "customer_orders_summary.is_repeat_buyer"
+          ],
+          "transformation": "case",
+          "expression": "CASE WHEN customer_orders_summary.is_repeat_buyer THEN 'returning' ELSE 'new' END",
+          "source_file": "models/marts/customers.sql",
+          "line_range": [
+            47,
+            47
+          ]
+        }
+      ]
+    },
+    {
+      "node_id": "transformation:stg_orders",
+      "name": "stg_orders",
+      "node_type": "transformation",
+      "source_datasets": [
+        "source:ecom.raw_orders"
+      ],
+      "target_datasets": [
+        "dataset:stg_orders"
+      ],
+      "transformation_type": "select",
+      "source_file": "models/staging/stg_orders.sql",
+      "line_range": [
+        1,
+        33
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": [
+        {
+          "target_column": "*",
+          "source_columns": [],
+          "transformation": "wildcard_passthrough",
+          "expression": "*",
+          "source_file": "models/staging/stg_orders.sql",
+          "line_range": [
+            5,
+            5
+          ]
+        },
+        {
+          "target_column": "order_id",
+          "source_columns": [
+            "id"
+          ],
+          "transformation": "passthrough",
+          "expression": "id",
+          "source_file": "models/staging/stg_orders.sql",
+          "line_range": [
+            13,
+            13
+          ]
+        },
+        {
+          "target_column": "location_id",
+          "source_columns": [
+            "store_id"
+          ],
+          "transformation": "passthrough",
+          "expression": "store_id",
+          "source_file": "models/staging/stg_orders.sql",
+          "line_range": [
+            15,
+            15
+          ]
+        },
+        {
+          "target_column": "customer_id",
+          "source_columns": [
+            "customer"
+          ],
+          "transformation": "passthrough",
+          "expression": "customer",
+          "source_file": "models/staging/stg_orders.sql",
+          "line_range": [
+            16,
+            16
+          ]
+        },
+        {
+          "target_column": "subtotal_cents",
+          "source_columns": [
+            "subtotal"
+          ],
+          "transformation": "passthrough",
+          "expression": "subtotal",
+          "source_file": "models/staging/stg_orders.sql",
+          "line_range": [
+            19,
+            19
+          ]
+        },
+        {
+          "target_column": "tax_paid_cents",
+          "source_columns": [
+            "tax_paid"
+          ],
+          "transformation": "passthrough",
+          "expression": "tax_paid",
+          "source_file": "models/staging/stg_orders.sql",
+          "line_range": [
+            20,
+            20
+          ]
+        },
+        {
+          "target_column": "order_total_cents",
+          "source_columns": [
+            "order_total"
+          ],
+          "transformation": "passthrough",
+          "expression": "order_total",
+          "source_file": "models/staging/stg_orders.sql",
+          "line_range": [
+            21,
+            21
+          ]
+        },
+        {
+          "target_column": "subtotal",
+          "source_columns": [],
+          "transformation": "compute",
+          "expression": "CENTS_TO_DOLLARS('subtotal')",
+          "source_file": "models/staging/stg_orders.sql",
+          "line_range": [
+            19,
+            19
+          ]
+        },
+        {
+          "target_column": "tax_paid",
+          "source_columns": [],
+          "transformation": "compute",
+          "expression": "CENTS_TO_DOLLARS('tax_paid')",
+          "source_file": "models/staging/stg_orders.sql",
+          "line_range": [
+            20,
+            20
+          ]
+        },
+        {
+          "target_column": "order_total",
+          "source_columns": [],
+          "transformation": "compute",
+          "expression": "CENTS_TO_DOLLARS('order_total')",
+          "source_file": "models/staging/stg_orders.sql",
+          "line_range": [
+            21,
+            21
+          ]
+        },
+        {
+          "target_column": "ordered_at",
+          "source_columns": [],
+          "transformation": "compute",
+          "expression": "NULL",
+          "source_file": "models/staging/stg_orders.sql",
+          "line_range": [
+            27,
+            27
+          ]
+        }
+      ]
+    },
+    {
+      "node_id": "transformation:products",
+      "name": "products",
+      "node_type": "transformation",
+      "source_datasets": [
+        "stg_products"
+      ],
+      "target_datasets": [
+        "dataset:products"
+      ],
+      "transformation_type": "select",
+      "source_file": "models/marts/products.sql",
+      "line_range": [
+        1,
+        9
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": [
+        {
+          "target_column": "*",
+          "source_columns": [],
+          "transformation": "wildcard_passthrough",
+          "expression": "*",
+          "source_file": "models/marts/products.sql",
+          "line_range": [
+            5,
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "node_id": "transformation:stg_locations",
+      "name": "stg_locations",
+      "node_type": "transformation",
+      "source_datasets": [
+        "source:ecom.raw_stores"
+      ],
+      "target_datasets": [
+        "dataset:stg_locations"
+      ],
+      "transformation_type": "select",
+      "source_file": "models/staging/stg_locations.sql",
+      "line_range": [
+        1,
+        29
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": [
+        {
+          "target_column": "*",
+          "source_columns": [],
+          "transformation": "wildcard_passthrough",
+          "expression": "*",
+          "source_file": "models/staging/stg_locations.sql",
+          "line_range": [
+            5,
+            5
+          ]
+        },
+        {
+          "target_column": "location_id",
+          "source_columns": [
+            "id"
+          ],
+          "transformation": "passthrough",
+          "expression": "id",
+          "source_file": "models/staging/stg_locations.sql",
+          "line_range": [
+            13,
+            13
+          ]
+        },
+        {
+          "target_column": "location_name",
+          "source_columns": [
+            "name"
+          ],
+          "transformation": "passthrough",
+          "expression": "name",
+          "source_file": "models/staging/stg_locations.sql",
+          "line_range": [
+            9,
+            9
+          ]
+        },
+        {
+          "target_column": "tax_rate",
+          "source_columns": [
+            "tax_rate"
+          ],
+          "transformation": "passthrough",
+          "expression": "tax_rate /* -------- numerics */",
+          "source_file": "models/staging/stg_locations.sql",
+          "line_range": [
+            20,
+            20
+          ]
+        },
+        {
+          "target_column": "opened_date",
+          "source_columns": [],
+          "transformation": "compute",
+          "expression": "NULL",
+          "source_file": "models/staging/stg_locations.sql",
+          "line_range": [
+            23,
+            23
+          ]
+        }
+      ]
+    },
+    {
+      "node_id": "transformation:stg_supplies",
+      "name": "stg_supplies",
+      "node_type": "transformation",
+      "source_datasets": [
+        "source:ecom.raw_supplies"
+      ],
+      "target_datasets": [
+        "dataset:stg_supplies"
+      ],
+      "transformation_type": "select",
+      "source_file": "models/staging/stg_supplies.sql",
+      "line_range": [
+        1,
+        31
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": [
+        {
+          "target_column": "*",
+          "source_columns": [],
+          "transformation": "wildcard_passthrough",
+          "expression": "*",
+          "source_file": "models/staging/stg_supplies.sql",
+          "line_range": [
+            5,
+            5
+          ]
+        },
+        {
+          "target_column": "supply_uuid",
+          "source_columns": [],
+          "transformation": "compute",
+          "expression": "NULL",
+          "source_file": "models/staging/stg_supplies.sql",
+          "line_range": [
+            14,
+            14
+          ]
+        },
+        {
+          "target_column": "supply_id",
+          "source_columns": [
+            "id"
+          ],
+          "transformation": "passthrough",
+          "expression": "id",
+          "source_file": "models/staging/stg_supplies.sql",
+          "line_range": [
+            13,
+            13
+          ]
+        },
+        {
+          "target_column": "product_id",
+          "source_columns": [
+            "sku"
+          ],
+          "transformation": "passthrough",
+          "expression": "sku",
+          "source_file": "models/staging/stg_supplies.sql",
+          "line_range": [
+            16,
+            16
+          ]
+        },
+        {
+          "target_column": "supply_name",
+          "source_columns": [
+            "name"
+          ],
+          "transformation": "passthrough",
+          "expression": "name",
+          "source_file": "models/staging/stg_supplies.sql",
+          "line_range": [
+            9,
+            9
+          ]
+        },
+        {
+          "target_column": "supply_cost",
+          "source_columns": [],
+          "transformation": "compute",
+          "expression": "CENTS_TO_DOLLARS('cost')",
+          "source_file": "models/staging/stg_supplies.sql",
+          "line_range": [
+            22,
+            22
+          ]
+        },
+        {
+          "target_column": "is_perishable_supply",
+          "source_columns": [
+            "perishable"
+          ],
+          "transformation": "passthrough",
+          "expression": "perishable",
+          "source_file": "models/staging/stg_supplies.sql",
+          "line_range": [
+            25,
+            25
+          ]
+        }
+      ]
+    }
+  ]
+}

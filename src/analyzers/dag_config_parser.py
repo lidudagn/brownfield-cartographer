@@ -90,7 +90,7 @@ def parse_sources(sources_yaml: str) -> List[DatasetNode]:
                         
                 datasets.append(DatasetNode(
                     node_id=f"dataset:{source.name}.{table.name}",
-                    name=table.name,
+                    name=f"{source.name}.{table.name}",
                     storage_type="table",
                     schema_snapshot=schema_snapshot,
                     freshness_sla=table.loaded_at_field,
@@ -198,7 +198,7 @@ def detect_entry_points(
                     continue
                     
                 # 4. python __main__ 
-                if "__name__" in content and '"__main__"' in content or "'__main__'" in content:
+                if "__name__" in content and ('"__main__"' in content or "'__main__'" in content):
                     mod.is_entry_point = True
                     mod.entry_point_type = "cli"
                     continue

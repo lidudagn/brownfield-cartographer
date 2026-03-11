@@ -92,3 +92,11 @@ class Hydrologist:
             "num_edges": self.graph.number_of_edges(),
             "max_lineage_depth": max_depth if max_depth >= 0 else "Has Cycles"
         }
+
+    def find_sources(self) -> List[str]:
+        """Find data source nodes (in-degree=0) — entry points of the data system."""
+        return [n for n in self.graph.nodes() if self.graph.in_degree(n) == 0]
+
+    def find_sinks(self) -> List[str]:
+        """Find data sink nodes (out-degree=0) — final outputs of the data system."""
+        return [n for n in self.graph.nodes() if self.graph.out_degree(n) == 0]

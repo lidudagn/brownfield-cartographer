@@ -400,10 +400,16 @@ class TreeSitterAnalyzer:
                 # Pandas simple reads/writes (e.g., pd.read_csv('...'), df.to_parquet('...'))
                 if any(r in full_chain for r in ("read_csv", "read_json", "read_table", "read_gbq", "read_parquet")):
                     arg = self._get_first_string_arg(node)
-                    if arg: reads.append(arg)
+                    if arg:
+                        reads.append(arg)
+                    else:
+                        logger.info("Dynamic reference, cannot resolve: %s at line %d", full_chain, node.start_point[0] + 1)
                 elif any(w in full_chain for w in ("to_csv", "to_json", "to_gbq", "to_parquet", "to_sql")):
                     arg = self._get_first_string_arg(node)
-                    if arg: writes.append(arg)
+                    if arg:
+                        writes.append(arg)
+                    else:
+                        logger.info("Dynamic reference, cannot resolve: %s at line %d", full_chain, node.start_point[0] + 1)
                 
                 # PySpark chains (e.g., spark.read.format('parquet').load('...'))
                 # For PySpark, we typically care about the load()/save()/csv()/parquet() call
@@ -411,12 +417,18 @@ class TreeSitterAnalyzer:
                     # the dataset path is usually the argument to load, csv, parquet, json
                     if chain[-1] in ("load", "csv", "parquet", "json"):
                         arg = self._get_first_string_arg(node)
-                        if arg: reads.append(arg)
+                        if arg:
+                            reads.append(arg)
+                        else:
+                            logger.info("Dynamic reference, cannot resolve: %s at line %d", full_chain, node.start_point[0] + 1)
                         
                 elif "write" in chain and any(m in chain for m in ("save", "csv", "parquet", "json", "mode", "format", "saveAsTable")):
                     if chain[-1] in ("save", "csv", "parquet", "json", "saveAsTable"):
                         arg = self._get_first_string_arg(node)
-                        if arg: writes.append(arg)
+                        if arg:
+                            writes.append(arg)
+                        else:
+                            logger.info("Dynamic reference, cannot resolve: %s at line %d", full_chain, node.start_point[0] + 1)
                         
         return reads, writes
 

@@ -1,0 +1,776 @@
+{
+  "imports_edges": [
+    {
+      "source": "models/marts/locations.sql",
+      "target": "models/staging/stg_locations.sql",
+      "evidence": {
+        "file_path": "models/marts/locations.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_locations') }}",
+        "analysis_method": "regex"
+      },
+      "edge_type": "IMPORTS",
+      "weight": 1,
+      "is_dynamic": false
+    },
+    {
+      "source": "models/marts/supplies.sql",
+      "target": "models/staging/stg_supplies.sql",
+      "evidence": {
+        "file_path": "models/marts/supplies.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_supplies') }}",
+        "analysis_method": "regex"
+      },
+      "edge_type": "IMPORTS",
+      "weight": 1,
+      "is_dynamic": false
+    },
+    {
+      "source": "models/marts/orders.sql",
+      "target": "models/marts/order_items.sql",
+      "evidence": {
+        "file_path": "models/marts/orders.sql",
+        "line_start": 11,
+        "line_end": 11,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('order_items') }}",
+        "analysis_method": "regex"
+      },
+      "edge_type": "IMPORTS",
+      "weight": 1,
+      "is_dynamic": false
+    },
+    {
+      "source": "models/marts/orders.sql",
+      "target": "models/staging/stg_orders.sql",
+      "evidence": {
+        "file_path": "models/marts/orders.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_orders') }}",
+        "analysis_method": "regex"
+      },
+      "edge_type": "IMPORTS",
+      "weight": 1,
+      "is_dynamic": false
+    },
+    {
+      "source": "models/marts/order_items.sql",
+      "target": "models/staging/stg_supplies.sql",
+      "evidence": {
+        "file_path": "models/marts/order_items.sql",
+        "line_start": 24,
+        "line_end": 24,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_supplies') }}",
+        "analysis_method": "regex"
+      },
+      "edge_type": "IMPORTS",
+      "weight": 1,
+      "is_dynamic": false
+    },
+    {
+      "source": "models/marts/order_items.sql",
+      "target": "models/staging/stg_products.sql",
+      "evidence": {
+        "file_path": "models/marts/order_items.sql",
+        "line_start": 18,
+        "line_end": 18,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_products') }}",
+        "analysis_method": "regex"
+      },
+      "edge_type": "IMPORTS",
+      "weight": 1,
+      "is_dynamic": false
+    },
+    {
+      "source": "models/marts/order_items.sql",
+      "target": "models/staging/stg_orders.sql",
+      "evidence": {
+        "file_path": "models/marts/order_items.sql",
+        "line_start": 12,
+        "line_end": 12,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_orders') }}",
+        "analysis_method": "regex"
+      },
+      "edge_type": "IMPORTS",
+      "weight": 1,
+      "is_dynamic": false
+    },
+    {
+      "source": "models/marts/order_items.sql",
+      "target": "models/staging/stg_order_items.sql",
+      "evidence": {
+        "file_path": "models/marts/order_items.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_order_items') }}",
+        "analysis_method": "regex"
+      },
+      "edge_type": "IMPORTS",
+      "weight": 1,
+      "is_dynamic": false
+    },
+    {
+      "source": "models/marts/customers.sql",
+      "target": "models/marts/orders.sql",
+      "evidence": {
+        "file_path": "models/marts/customers.sql",
+        "line_start": 11,
+        "line_end": 11,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('orders') }}",
+        "analysis_method": "regex"
+      },
+      "edge_type": "IMPORTS",
+      "weight": 1,
+      "is_dynamic": false
+    },
+    {
+      "source": "models/marts/customers.sql",
+      "target": "models/staging/stg_customers.sql",
+      "evidence": {
+        "file_path": "models/marts/customers.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_customers') }}",
+        "analysis_method": "regex"
+      },
+      "edge_type": "IMPORTS",
+      "weight": 1,
+      "is_dynamic": false
+    },
+    {
+      "source": "models/marts/products.sql",
+      "target": "models/staging/stg_products.sql",
+      "evidence": {
+        "file_path": "models/marts/products.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_products') }}",
+        "analysis_method": "regex"
+      },
+      "edge_type": "IMPORTS",
+      "weight": 1,
+      "is_dynamic": false
+    }
+  ],
+  "calls_edges": [
+    {
+      "source": "models/staging/stg_products.sql",
+      "target": "macros/cents_to_dollars.sql",
+      "evidence": {
+        "file_path": "models/staging/stg_products.sql",
+        "line_start": 23,
+        "line_end": 23,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "{{ cents_to_dollars('price') }} as product_price,",
+        "analysis_method": "regex"
+      },
+      "edge_type": "CALLS"
+    },
+    {
+      "source": "models/staging/stg_orders.sql",
+      "target": "macros/cents_to_dollars.sql",
+      "evidence": {
+        "file_path": "models/staging/stg_orders.sql",
+        "line_start": 22,
+        "line_end": 22,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "{{ cents_to_dollars('subtotal') }} as subtotal,",
+        "analysis_method": "regex"
+      },
+      "edge_type": "CALLS"
+    },
+    {
+      "source": "models/staging/stg_supplies.sql",
+      "target": "macros/cents_to_dollars.sql",
+      "evidence": {
+        "file_path": "models/staging/stg_supplies.sql",
+        "line_start": 22,
+        "line_end": 22,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "{{ cents_to_dollars('cost') }} as supply_cost,",
+        "analysis_method": "regex"
+      },
+      "edge_type": "CALLS"
+    }
+  ],
+  "produces_edges": [
+    {
+      "source": "transformation:locations",
+      "target": "dataset:locations",
+      "evidence": {
+        "file_path": "models/marts/locations.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "with",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:supplies",
+      "target": "dataset:supplies",
+      "evidence": {
+        "file_path": "models/marts/supplies.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "with",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:orders",
+      "target": "dataset:orders",
+      "evidence": {
+        "file_path": "models/marts/orders.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "with",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:order_items",
+      "target": "dataset:order_items",
+      "evidence": {
+        "file_path": "models/marts/order_items.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "with",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:metricflow_time_spine",
+      "target": "dataset:metricflow_time_spine",
+      "evidence": {
+        "file_path": "models/marts/metricflow_time_spine.sql",
+        "line_start": 2,
+        "line_end": 2,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "with",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:stg_products",
+      "target": "dataset:stg_products",
+      "evidence": {
+        "file_path": "models/staging/stg_products.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "with",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:stg_order_items",
+      "target": "dataset:stg_order_items",
+      "evidence": {
+        "file_path": "models/staging/stg_order_items.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "with",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:stg_customers",
+      "target": "dataset:stg_customers",
+      "evidence": {
+        "file_path": "models/staging/stg_customers.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "with",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:customers",
+      "target": "dataset:customers",
+      "evidence": {
+        "file_path": "models/marts/customers.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "with",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:stg_orders",
+      "target": "dataset:stg_orders",
+      "evidence": {
+        "file_path": "models/staging/stg_orders.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "with",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:products",
+      "target": "dataset:products",
+      "evidence": {
+        "file_path": "models/marts/products.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "with",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:stg_locations",
+      "target": "dataset:stg_locations",
+      "evidence": {
+        "file_path": "models/staging/stg_locations.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "with",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:stg_supplies",
+      "target": "dataset:stg_supplies",
+      "evidence": {
+        "file_path": "models/staging/stg_supplies.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "with",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    }
+  ],
+  "consumes_edges": [
+    {
+      "source": "transformation:locations",
+      "target": "dataset:stg_locations",
+      "evidence": {
+        "file_path": "models/marts/locations.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_locations') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:supplies",
+      "target": "dataset:stg_supplies",
+      "evidence": {
+        "file_path": "models/marts/supplies.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_supplies') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:orders",
+      "target": "dataset:order_items",
+      "evidence": {
+        "file_path": "models/marts/orders.sql",
+        "line_start": 9,
+        "line_end": 9,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "order_items as (",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:orders",
+      "target": "dataset:stg_orders",
+      "evidence": {
+        "file_path": "models/marts/orders.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_orders') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:order_items",
+      "target": "dataset:stg_supplies",
+      "evidence": {
+        "file_path": "models/marts/order_items.sql",
+        "line_start": 24,
+        "line_end": 24,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_supplies') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:order_items",
+      "target": "dataset:stg_products",
+      "evidence": {
+        "file_path": "models/marts/order_items.sql",
+        "line_start": 18,
+        "line_end": 18,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_products') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:order_items",
+      "target": "dataset:stg_orders",
+      "evidence": {
+        "file_path": "models/marts/order_items.sql",
+        "line_start": 12,
+        "line_end": 12,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_orders') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:order_items",
+      "target": "dataset:stg_order_items",
+      "evidence": {
+        "file_path": "models/marts/order_items.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_order_items') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:stg_products",
+      "target": "dataset:ecom.raw_products",
+      "evidence": {
+        "file_path": "models/staging/stg_products.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ source('ecom', 'raw_products') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:stg_order_items",
+      "target": "dataset:ecom.raw_items",
+      "evidence": {
+        "file_path": "models/staging/stg_order_items.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ source('ecom', 'raw_items') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:stg_customers",
+      "target": "dataset:ecom.raw_customers",
+      "evidence": {
+        "file_path": "models/staging/stg_customers.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ source('ecom', 'raw_customers') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:customers",
+      "target": "dataset:orders",
+      "evidence": {
+        "file_path": "models/marts/customers.sql",
+        "line_start": 9,
+        "line_end": 9,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "orders as (",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:customers",
+      "target": "dataset:stg_customers",
+      "evidence": {
+        "file_path": "models/marts/customers.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_customers') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:stg_orders",
+      "target": "dataset:ecom.raw_orders",
+      "evidence": {
+        "file_path": "models/staging/stg_orders.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ source('ecom', 'raw_orders') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:products",
+      "target": "dataset:stg_products",
+      "evidence": {
+        "file_path": "models/marts/products.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ ref('stg_products') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:stg_locations",
+      "target": "dataset:ecom.raw_stores",
+      "evidence": {
+        "file_path": "models/staging/stg_locations.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ source('ecom', 'raw_stores') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    },
+    {
+      "source": "transformation:stg_supplies",
+      "target": "dataset:ecom.raw_supplies",
+      "evidence": {
+        "file_path": "models/staging/stg_supplies.sql",
+        "line_start": 5,
+        "line_end": 5,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "select * from {{ source('ecom', 'raw_supplies') }}",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "CONSUMES"
+    }
+  ],
+  "configures_edges": [
+    {
+      "source": "models/marts/customers.yml",
+      "target": "models/marts/customers.yml",
+      "evidence": {
+        "file_path": "models/marts/customers.yml",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "configures model: customers",
+        "analysis_method": "yaml_parse"
+      },
+      "edge_type": "CONFIGURES"
+    },
+    {
+      "source": "models/marts/order_items.yml",
+      "target": "models/marts/order_items.sql",
+      "evidence": {
+        "file_path": "models/marts/order_items.yml",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "configures model: order_items",
+        "analysis_method": "yaml_parse"
+      },
+      "edge_type": "CONFIGURES"
+    },
+    {
+      "source": "models/marts/orders.yml",
+      "target": "models/marts/orders.sql",
+      "evidence": {
+        "file_path": "models/marts/orders.yml",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "configures model: orders",
+        "analysis_method": "yaml_parse"
+      },
+      "edge_type": "CONFIGURES"
+    },
+    {
+      "source": "models/staging/stg_supplies.yml",
+      "target": "models/staging/stg_supplies.sql",
+      "evidence": {
+        "file_path": "models/staging/stg_supplies.yml",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "configures model: stg_supplies",
+        "analysis_method": "yaml_parse"
+      },
+      "edge_type": "CONFIGURES"
+    },
+    {
+      "source": "models/staging/stg_customers.yml",
+      "target": "models/staging/stg_customers.sql",
+      "evidence": {
+        "file_path": "models/staging/stg_customers.yml",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "configures model: stg_customers",
+        "analysis_method": "yaml_parse"
+      },
+      "edge_type": "CONFIGURES"
+    },
+    {
+      "source": "models/staging/stg_orders.yml",
+      "target": "models/staging/stg_orders.sql",
+      "evidence": {
+        "file_path": "models/staging/stg_orders.yml",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "configures model: stg_orders",
+        "analysis_method": "yaml_parse"
+      },
+      "edge_type": "CONFIGURES"
+    },
+    {
+      "source": "models/staging/stg_products.yml",
+      "target": "models/staging/stg_products.sql",
+      "evidence": {
+        "file_path": "models/staging/stg_products.yml",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "configures model: stg_products",
+        "analysis_method": "yaml_parse"
+      },
+      "edge_type": "CONFIGURES"
+    },
+    {
+      "source": "models/staging/stg_locations.yml",
+      "target": "models/staging/stg_locations.sql",
+      "evidence": {
+        "file_path": "models/staging/stg_locations.yml",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "configures model: stg_locations",
+        "analysis_method": "yaml_parse"
+      },
+      "edge_type": "CONFIGURES"
+    },
+    {
+      "source": "models/staging/stg_order_items.yml",
+      "target": "models/staging/stg_order_items.sql",
+      "evidence": {
+        "file_path": "models/staging/stg_order_items.yml",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "configures model: stg_order_items",
+        "analysis_method": "yaml_parse"
+      },
+      "edge_type": "CONFIGURES"
+    }
+  ]
+}

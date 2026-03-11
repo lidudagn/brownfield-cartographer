@@ -2,7 +2,7 @@
 name = "brownfield-cartographer"
 version = "1.0.0"
 description = "Multi-agent codebase intelligence system for rapid FDE onboarding in production environments"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
     "pydantic>=2.5.0",
     "networkx>=3.2",

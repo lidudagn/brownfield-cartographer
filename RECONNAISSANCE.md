@@ -86,19 +86,44 @@ Concentrated in the **Marts Layer**.
 
 ---
 
-## Model Dependencies (ASCII DAG)
+## Model Dependencies (Full DAG)
 
 ```text
-seeds
+seeds (CSVs: raw_customers, raw_orders, raw_items, raw_products, raw_stores, raw_supplies)
   │
   ▼
-stg_customers     stg_orders     stg_products
-      │                │              │
-      └──────► order_items ◄──────────┘
-                      │
-                      ▼
-                   orders
-                      │
-                      ▼
-                   customers
+┌─────────────┬─────────────┬──────────────┬──────────────┬──────────────┬────────────────┐
+│stg_customers│  stg_orders │stg_order_items│ stg_products │stg_locations │  stg_supplies  │
+└──────┬──────┴──────┬──────┴──────┬───────┴──────┬───────┴──────┬───────┴───────┬────────┘
+       │             │             │              │              │               │
+       │             │             ├──────────────┤              │               │
+       │             │             ▼              ▼              │               │
+       │             │        order_items ◄── products           │               │
+       │             │             │                             │               │
+       │             │             ▼                             ▼               ▼
+       │             └──────► orders                        locations        supplies
+       │                        │
+       └────────────────────────┤
+                                ▼
+                            customers
+
+                       metricflow_time_spine (standalone, no refs)
 ```
+
+### Key Observations
+- **Staging models** (prefix `stg_`) are 1:1 wrappers around raw source tables
+- **`order_items`** is the junction: joins `stg_order_items` + `stg_products` + `stg_supplies`
+- **`orders`** aggregates from `order_items` + `stg_orders`
+- **`customers`** is the "Golden Record": joins `stg_customers` + `orders`
+- **`locations`**, **`products`**, **`supplies`** are simpler pass-through marts
+- **`metricflow_time_spine`** is an isolated utility (generates a date spine via `generate_series`)
+
+---
+
+## What Was Hardest / Where I Got Lost
+
+1. **The `source()` → seed indirection**: I initially assumed `source('ecom', 'raw_customers')` pointed to a real database table. It took reading `dbt_project.yml` + `__sources.yml` + cross-referencing the `seeds/` directory to realize the "raw" schema is actually static CSVs loaded by `dbt seed`. A parser that only follows SQL references would report broken upstream dependencies.
+2. **The `cents_to_dollars` macro**: This custom macro is used in 4 staging models. Without reading `macros/cents_to_dollars.sql`, I couldn't tell if it was a simple cast or had business logic. Tracing macro dependencies across files was manual and error-prone.
+3. **Window function semantics**: Understanding the `partition by customer_id` in `orders.sql` required reading the full CTE chain to understand that it's computing `customer_order_number`, not just grouping.
+4. **The `metricflow_time_spine`**: This model has zero `ref()` calls and uses `generate_series()` — a pure utility. I initially thought it was orphaned dead code until I understood its role in MetricFlow.
+
