@@ -34,8 +34,6 @@ EXTENSION_MAP: Dict[str, Optional[str]] = {
     ".sql": "jinja_sql",
     ".yml": "yaml",
     ".yaml": "yaml",
-    ".js": "javascript",
-    ".ts": "typescript",
     ".csv": "csv",
     ".md": None,
     ".txt": None,
@@ -448,7 +446,7 @@ class TreeSitterAnalyzer:
         return []
 
     def _get_first_string_arg(self, node: Any) -> Optional[str]:
-        """Extract the string value of the first argument if it's a string literal."""
+        """Extract the string value of the first string argument from a call."""
         args_node = node.child_by_field_name("arguments")
         if not args_node or not getattr(args_node, "named_children", []):
             return None
@@ -465,8 +463,7 @@ class TreeSitterAnalyzer:
                 if val and val.type == "string":
                     text = val.text.decode("utf-8")
                     return text[1:-1] if len(text) >= 2 else text
-            # return None if the first arg is not a static string (e.g. a variable)
-            return None
+            # Continue scanning — don't bail on non-string positional args
         return None
 
     def _extract_python_classes(self, root: Any, source: str) -> List[str]:
