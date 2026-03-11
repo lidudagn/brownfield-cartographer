@@ -2,13 +2,11 @@
 
 > Multi-agent codebase intelligence system for rapid FDE onboarding in production environments.
 
-The Brownfield Cartographer is designed to automatically ingest a complex "brownfield" codebase (such as an undocumented dbt project) and build a queryable Codebase Knowledge Graph detailing data flows, code metrics, and architectural structure.
+The Brownfield Cartographer automatically ingests a complex "brownfield" codebase (e.g., an undocumented dbt project) and builds a queryable Codebase Knowledge Graph detailing data flows, code metrics, and architectural structure.
 
-Welcome to **Phase 2: The Hydrologist Agent** (Data Flow & Lineage).
+## Architecture
 
-## Overview
-
-The system orchestrates a multi-step analysis pipeline combining two agents:
+The system orchestrates a multi-step analysis pipeline combining three agents:
 
 ### Surveyor Agent (Phase 1)
 1. Multi-language AST parsing (Python, SQL, YAML) via `tree-sitter`
@@ -18,23 +16,32 @@ The system orchestrates a multi-step analysis pipeline combining two agents:
 5. Git velocity extraction (computing unique change days)
 6. PageRank scaling to identify structural and architectural "hubs"
 7. Circular dependency detection (Strongly Connected Components)
-8. Dead code candidate scoring (confidence derived from 4 key codebase factors)
+8. Dead code candidate scoring (4-factor confidence: no imports, stale, no tests, no exposure)
 
 ### Hydrologist Agent (Phase 2)
 9. Data lineage graph construction (Dataset → Transformation → Dataset)
-10. Blast radius analysis via shortest-path traversal
-11. Source/sink identification (in-degree=0 / out-degree=0 nodes)
-12. Cycle detection in lineage DAGs
-13. Path-based lineage tracing between any two nodes
+10. Python data flow integration (pandas/PySpark reads/writes)
+11. Blast radius analysis via shortest-path traversal
+12. Source/sink identification (in-degree=0 / out-degree=0 nodes)
+13. Cycle detection in lineage DAGs
+14. Path-based lineage tracing between any two nodes
+15. Upstream/downstream dependency queries
+
+### Semanticist Agent (Phase 3)
+16. LLM-powered purpose statements for every module
+17. Documentation drift detection
+18. Domain clustering via semantic similarity
+19. Five FDE Day-One question answering with evidence citations
+20. Context window budgeting with tiered model selection
 
 ### Outputs
-14. Output serialization to standard `JSON` format (`module_graph.json`, `lineage_graph.json`)
-15. `matplotlib` network graph visualization
-16. `cartography_trace.jsonl` audit log
+21. Output serialization to standard JSON format (`module_graph.json`, `lineage_graph.json`)
+22. `matplotlib` network graph visualization (`module_graph.png`)
+23. `onboarding_brief.md` — Five FDE Day-One answers (LLM or static fallback)
+24. `cartography_trace.jsonl` audit log
+25. Schema drift detection (SQL vs YAML column comparison)
 
 ## Installation
-
-The Brownfield Cartographer uses `pyproject.toml` to manage standard dependencies.
 
 **Requirements:**
 - Python `>= 3.10`
@@ -47,6 +54,9 @@ cd brownfield-cartographer
 
 # Install using pip (or uv)
 pip install -e .[dev]
+
+# Or using uv
+uv pip install -e .[dev]
 ```
 
 ## Usage
@@ -75,22 +85,23 @@ Analysis generates the following files in the target `--output-dir` (default: `.
    - Extracted objects (`ModuleNode`, `DatasetNode`, `FunctionNode`, `TransformationNode`)
    - Links and data flows (`ImportsEdge`, `ProducesEdge`, `ConsumesEdge`, `CallsEdge`, `ConfiguresEdge`)
    - Every edge and finding contains an `Evidence` trace (file, line number, and raw snippet)
-   - Extracted Data Lineage, Circular Dependencies, and Dead Code calculations.
+   - Circular Dependencies, Dead Code, and Schema Drift reports
 
 2. **`lineage_graph.json`**
    A focused subset containing transformations, datasets, and lineage edges for data flow analysis.
 
-3. **`module_graph.png`**
+3. **`onboarding_brief.md`**
+   The FDE Day-One Brief answering five critical onboarding questions with evidence citations.
+
+4. **`module_graph.png`**
    A static `matplotlib` rendering of the graph where:
    - Node size = Codebase PageRank importance
    - Node color = Git Change Velocity (Heatmap)
    - Edges = Imports / Calls / Produces relations
 
-4. **`cartography_trace.jsonl`**
+5. **`cartography_trace.jsonl`**
    Audit log of every analysis action with timestamps and metrics.
 
-## Known Gaps (Phase 2)
-- **Semanticist Agent (Phase 3):** LLM-powered purpose statements, domain clustering, and Day-One question answering are not yet implemented.
+## Known Gaps
 - **Navigator Agent (Phase 4):** Interactive query interface with `find_implementation`, `trace_lineage`, `blast_radius`, and `explain_module` tools not yet built.
-- **Deep Python Data Lineage:** Currently limited to top-level structural definitions. Intra-function control flow is not parsed into variables.
-- **Remote Data Warehouses:** Does not reach into a Snowflake/BigQuery schema to detect actual drift — schema snapshots map only to what is statically documented in the YAMLs vs `sqlglot` output.
+- **Remote Data Warehouses:** Does not reach into Snowflake/BigQuery schemas to detect actual drift — schema snapshots only cover what is statically documented in YAMLs vs `sqlglot` output.
