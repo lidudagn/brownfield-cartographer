@@ -1,8 +1,0 @@
-{"action": "file_discovery", "files_found": 38, "timestamp": "2026-03-11T11:19:03.745356"}
-{"action": "ast_parsing", "modules_parsed": 38, "parse_errors": 0, "timestamp": "2026-03-11T11:19:03.745384"}
-{"action": "sql_lineage", "sql_files_analyzed": 15, "column_lineages_extracted": 71, "unresolved_refs": 0, "timestamp": "2026-03-11T11:19:03.745387"}
-{"action": "entry_point_detection", "entry_points": 13, "timestamp": "2026-03-11T11:19:03.745395"}
-{"action": "git_velocity", "high_velocity_files": 0, "timestamp": "2026-03-11T11:19:03.745401"}
-{"action": "graph_analysis", "nodes": 38, "edges": 14, "circular_deps": 0, "dead_code_candidates": 0, "timestamp": "2026-03-11T11:19:03.745438"}
-{"action": "hydrologist", "lineage_nodes": 32, "lineage_edges": 30, "sources": 7, "sinks": 5, "timestamp": "2026-03-11T11:19:03.745442"}
-{"action": "serialization", "output_dir": "/home/lidya/Videos/week 4/brownfield-cartographer/.cartography_jaffle_v2", "duration_seconds": 1.91, "timestamp": "2026-03-11T11:19:03.745449"}
