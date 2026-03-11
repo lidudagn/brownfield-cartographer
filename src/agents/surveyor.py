@@ -12,7 +12,7 @@ import logging
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List, Set, Any
+from typing import Dict, List, Set, Any, Tuple
 
 import networkx as nx
 from tqdm import tqdm
@@ -69,7 +69,12 @@ def extract_git_velocity(repo_path: str, filepath: str, days: int = 30) -> Dict[
 
 
 def apply_80_20_velocity(modules: List[ModuleNode]) -> None:
-    """Flag top 20% of files by change velocity."""
+    """Flag top 20% of files by change velocity.
+
+    Tags high-velocity modules by prepending 'HIGH_VELOCITY' to their
+    domain_cluster field, which is consumed by the Archivist for the
+    CODEBASE.md "High-Velocity Files" section.
+    """
     if not modules:
         return
 
@@ -78,12 +83,19 @@ def apply_80_20_velocity(modules: List[ModuleNode]) -> None:
 
     # Flag top 20%
     top_n = max(1, int(len(sorted_mods) * 0.2))
+    high_velocity_paths: Set[str] = set()
     for mod in sorted_mods[:top_n]:
         if mod.change_velocity_30d > 0:
-            # We add this logic to handle any internal storage mechanism;
-            # but since "is_high_velocity" isn't directly on ModuleNode,
-            # we rely on the raw velocity_score or domain_cluster labeling.
-            pass
+            existing = mod.domain_cluster or ""
+            mod.domain_cluster = f"HIGH_VELOCITY|{existing}" if existing else "HIGH_VELOCITY"
+            high_velocity_paths.add(mod.path)
+
+    if high_velocity_paths:
+        logger.info(
+            "Flagged %d high-velocity files (top 20%%): %s",
+            len(high_velocity_paths),
+            ", ".join(sorted(high_velocity_paths)),
+        )
 
 
 # =============================================================================
@@ -301,7 +313,7 @@ def build_module_graph(modules: List[ModuleNode], repo_path: str = ".") -> Tuple
                 calls_edges.append(CallsEdge(
                     source=mod.path,
                     target=macro_target,
-                    evidence=get_evidence_line(repo_path, mod.path, func)
+                    evidence=get_evidence_line(repo_path, mod.path, macro_target)
                 ))
                 
     return G, imports_edges, calls_edges

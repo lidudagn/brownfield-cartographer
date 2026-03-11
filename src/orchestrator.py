@@ -168,14 +168,21 @@ def run_analysis(
     for mod in sql_modules:
         if "macros/" in mod.path.replace("\\", "/"):
             continue
-            
+
+        # Read each file to get accurate line count (Fix for stale raw_sql)
+        try:
+            mod_sql = (repo / mod.path).read_text(encoding="utf-8")
+            total_lines = len(mod_sql.splitlines())
+        except OSError:
+            total_lines = mod.lines_of_code
+
         transformations.append(TransformationNode(
             name=Path(mod.path).stem,
             source_datasets=mod.imports,
             target_datasets=[f"{Path(mod.path).stem}"],
             transformation_type="select",
             source_file=mod.path,
-            line_range=(1, len(raw_sql.splitlines())),
+            line_range=(1, total_lines),
             column_lineage=[lin for lin in lineages if lin.source_file == mod.path]
         ))
 
@@ -266,7 +273,7 @@ def run_analysis(
 
     # Step 10: Serialization & Vis (F-8, M-11)
     cg = CodebaseGraph(
-        repo_path=str(repo.absolute()),
+        repo_path=str(repo.resolve()),
         analysis_timestamp=datetime.now().isoformat(),
         modules=modules,
         datasets=datasets,

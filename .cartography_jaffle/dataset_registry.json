@@ -1,0 +1,90 @@
+{
+  "datasets": [
+    {
+      "name": "ecom.raw_customers",
+      "storage_type": "table",
+      "schema_snapshot": {
+        "id": "varchar",
+        "name": "varchar"
+      },
+      "freshness_sla": null,
+      "owner": null,
+      "is_source_of_truth": true,
+      "source_file": "models/staging/__sources.yml"
+    },
+    {
+      "name": "ecom.raw_orders",
+      "storage_type": "table",
+      "schema_snapshot": {
+        "id": "varchar",
+        "customer": "varchar",
+        "ordered_at": "timestamp",
+        "store_id": "varchar",
+        "subtotal": "integer",
+        "tax_paid": "integer",
+        "order_total": "integer"
+      },
+      "freshness_sla": "ordered_at",
+      "owner": null,
+      "is_source_of_truth": true,
+      "source_file": "models/staging/__sources.yml"
+    },
+    {
+      "name": "ecom.raw_items",
+      "storage_type": "table",
+      "schema_snapshot": {
+        "id": "varchar",
+        "order_id": "varchar",
+        "sku": "varchar"
+      },
+      "freshness_sla": null,
+      "owner": null,
+      "is_source_of_truth": true,
+      "source_file": "models/staging/__sources.yml"
+    },
+    {
+      "name": "ecom.raw_stores",
+      "storage_type": "table",
+      "schema_snapshot": {
+        "id": "varchar",
+        "name": "varchar",
+        "opened_at": "timestamp",
+        "tax_rate": "float"
+      },
+      "freshness_sla": "opened_at",
+      "owner": null,
+      "is_source_of_truth": true,
+      "source_file": "models/staging/__sources.yml"
+    },
+    {
+      "name": "ecom.raw_products",
+      "storage_type": "table",
+      "schema_snapshot": {
+        "sku": "varchar",
+        "name": "varchar",
+        "type": "varchar",
+        "price": "integer",
+        "description": "varchar"
+      },
+      "freshness_sla": null,
+      "owner": null,
+      "is_source_of_truth": true,
+      "source_file": "models/staging/__sources.yml"
+    },
+    {
+      "name": "ecom.raw_supplies",
+      "storage_type": "table",
+      "schema_snapshot": {
+        "id": "varchar",
+        "name": "varchar",
+        "cost": "integer",
+        "perishable": "varchar",
+        "sku": "varchar"
+      },
+      "freshness_sla": null,
+      "owner": null,
+      "is_source_of_truth": true,
+      "source_file": "models/staging/__sources.yml"
+    }
+  ]
+}
