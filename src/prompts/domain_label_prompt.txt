@@ -1,0 +1,9 @@
+You are an expert software architect.
+I have a list of modules with their purpose statements from a brownfield codebase. I want to cluster them into higher-level business domains (e.g., "Ingestion", "Transformation", "Serving", "Monitoring", "Core Models").
+
+Below is a cluster of purpose statements. Your task is to provide a single, short (1-3 words) label that best describes the business domain of this cluster.
+
+Cluster Purpose Statements:
+{cluster_statements}
+
+Respond ONLY with the selected 1-3 word label.

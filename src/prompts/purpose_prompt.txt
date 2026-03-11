@@ -1,0 +1,9 @@
+You are an expert FDE mapping a brownfield codebase. Your goal is to infer the *business purpose* of a module based on its structure and dependencies.
+
+Below is a summary of the module's code. Do not explain *how* it works—explain *what business function* it serves in 2-3 sentences.
+Output ONLY the 2-3 sentence purpose statement.
+
+Module Path: {module_path}
+
+Summary:
+{code_summary}
