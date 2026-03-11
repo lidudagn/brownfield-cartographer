@@ -1,8 +1,8 @@
-{"action": "file_discovery", "files_found": 38, "timestamp": "2026-03-12T00:23:26.461673"}
-{"action": "ast_parsing", "modules_parsed": 38, "parse_errors": 0, "timestamp": "2026-03-12T00:23:26.461694"}
-{"action": "sql_lineage", "sql_files_analyzed": 15, "column_lineages_extracted": 71, "unresolved_refs": 0, "timestamp": "2026-03-12T00:23:26.461697"}
-{"action": "entry_point_detection", "entry_points": 13, "timestamp": "2026-03-12T00:23:26.461705"}
-{"action": "git_velocity", "high_velocity_files": 0, "timestamp": "2026-03-12T00:23:26.461710"}
-{"action": "graph_analysis", "nodes": 38, "edges": 14, "circular_deps": 0, "dead_code_candidates": 0, "timestamp": "2026-03-12T00:23:26.461749"}
-{"action": "hydrologist", "lineage_nodes": 32, "lineage_edges": 30, "sources": 7, "sinks": 5, "timestamp": "2026-03-12T00:23:26.461753"}
-{"action": "serialization", "output_dir": "/home/lidya/Videos/week 4/brownfield-cartographer/.cartography", "duration_seconds": 22.36, "timestamp": "2026-03-12T00:23:26.461760"}
+{"action": "file_discovery", "files_found": 38, "timestamp": "2026-03-12T01:12:02.864064"}
+{"action": "ast_parsing", "modules_parsed": 38, "parse_errors": 0, "timestamp": "2026-03-12T01:12:02.864089"}
+{"action": "sql_lineage", "sql_files_analyzed": 15, "column_lineages_extracted": 71, "unresolved_refs": 0, "timestamp": "2026-03-12T01:12:02.864092"}
+{"action": "entry_point_detection", "entry_points": 13, "timestamp": "2026-03-12T01:12:02.864100"}
+{"action": "git_velocity", "high_velocity_files": 0, "timestamp": "2026-03-12T01:12:02.864109"}
+{"action": "graph_analysis", "nodes": 38, "edges": 14, "circular_deps": 0, "dead_code_candidates": 0, "timestamp": "2026-03-12T01:12:02.864229"}
+{"action": "hydrologist", "lineage_nodes": 32, "lineage_edges": 30, "sources": 7, "sinks": 5, "timestamp": "2026-03-12T01:12:02.864234"}
+{"action": "serialization", "output_dir": ".cartography", "duration_seconds": 9.55, "timestamp": "2026-03-12T01:12:02.864279"}
