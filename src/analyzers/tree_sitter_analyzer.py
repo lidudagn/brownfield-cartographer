@@ -340,13 +340,27 @@ class TreeSitterAnalyzer:
                 if func_node:
                     func_text = func_node.text.decode("utf-8")
                     if func_text == "__import__" or func_text.endswith("import_module"):
+                        reason = "variable"
+                        args_node = node.child_by_field_name("arguments")
+                        if args_node and getattr(args_node, "named_children", []):
+                            first_arg = args_node.named_children[0]
+                            if first_arg.type == "string":
+                                if first_arg.text.decode("utf-8").startswith(("f", "F")):
+                                    reason = "fstring"
+                                else:
+                                    reason = "dynamic_string"
+                            elif first_arg.type == "call":
+                                reason = "function_return"
+                            elif first_arg.type == "identifier":
+                                reason = "variable"
+
                         unresolved.append(
                             UnresolvedReference(
                                 ref_type="dynamic_import",
                                 raw_text=node.text.decode("utf-8"),
                                 source_file=filepath,
                                 source_line=node.start_point[0] + 1,
-                                reason="Dynamic import — cannot resolve statically",
+                                reason=reason,
                             )
                         )
 
@@ -523,13 +537,26 @@ class TreeSitterAnalyzer:
         )
         for match in dynamic_ref_pattern.finditer(source):
             line_num = source[: match.start()].count("\n") + 1
+            inner_text = re.search(r"ref\(\s*([^)]+)\s*\)", match.group(0))
+            reason = "variable"
+            if inner_text:
+                inner = inner_text.group(1).strip()
+                if inner.startswith("var("):
+                    reason = "variable"
+                elif inner.startswith("'") or inner.startswith('"'):
+                    reason = "dynamic_string"
+                elif "(" in inner:
+                    reason = "function_return"
+                else:
+                    reason = "variable"
+
             unresolved.append(
                 UnresolvedReference(
                     ref_type="macro_ref",
                     raw_text=match.group(0),
                     source_file=filepath,
                     source_line=line_num,
-                    reason="Dynamic/macro-wrapped ref() — cannot resolve statically",
+                    reason=reason,
                 )
             )
 

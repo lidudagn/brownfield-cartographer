@@ -89,7 +89,8 @@ def parse_sources(sources_yaml: str) -> List[DatasetNode]:
                             pass
                         
                 datasets.append(DatasetNode(
-                    name=f"{source.name}.{table.name}",
+                    node_id=f"dataset:{source.name}.{table.name}",
+                    name=table.name,
                     storage_type="table",
                     schema_snapshot=schema_snapshot,
                     freshness_sla=table.loaded_at_field,

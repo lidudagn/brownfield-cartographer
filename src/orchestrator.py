@@ -177,9 +177,10 @@ def run_analysis(
             total_lines = mod.lines_of_code
 
         transformations.append(TransformationNode(
+            node_id=f"transformation:{Path(mod.path).stem}",
             name=Path(mod.path).stem,
             source_datasets=mod.imports,
-            target_datasets=[f"{Path(mod.path).stem}"],
+            target_datasets=[f"dataset:{Path(mod.path).stem}"],
             transformation_type="select",
             source_file=mod.path,
             line_range=(1, total_lines),
@@ -252,8 +253,13 @@ def run_analysis(
                         snippet = line.strip()
                         start_line = i + 1
                         break
+            if sd.startswith("source:"):
+                sd_id = f"dataset:{sd.replace('source:', '')}"
+            else:
+                sd_id = f"dataset:{Path(sd).stem}"
+                
             consumes_edges.append(ConsumesEdge(
-                source=t.name, target=sd, 
+                source=t.node_id, target=sd_id, 
                 evidence=Evidence(file_path=t.source_file, line_start=start_line, line_end=start_line, snippet=snippet, analysis_method="sqlglot")
             ))
             
@@ -267,7 +273,7 @@ def run_analysis(
                         start_line = i + 1
                         break
             produces_edges.append(ProducesEdge(
-                source=t.name, target=td, 
+                source=t.node_id, target=td, 
                 evidence=Evidence(file_path=t.source_file, line_start=start_line, line_end=start_line, snippet=snippet, analysis_method="sqlglot")
             ))
 

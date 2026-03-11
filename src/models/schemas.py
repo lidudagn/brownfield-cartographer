@@ -109,6 +109,7 @@ class ModuleNode(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     path: str  # Relative to repo root
+    node_type: Literal["module"] = "module"
     language: Literal[
         "python", "sql", "yaml", "jinja_sql", "csv", "unknown"
     ]
@@ -155,7 +156,9 @@ class DatasetNode(BaseModel):
     capture column definitions for downstream drift detection.
     """
 
+    node_id: str
     name: str
+    node_type: Literal["dataset"] = "dataset"
     storage_type: Literal["table", "file", "stream", "api", "seed"]
     schema_snapshot: Dict[str, str] = Field(
         default_factory=dict,
@@ -189,7 +192,9 @@ class TransformationNode(BaseModel):
     tracks column-level provenance through the transformation.
     """
 
+    node_id: str
     name: str
+    node_type: Literal["transformation"] = "transformation"
     source_datasets: List[str]
     target_datasets: List[str]
     transformation_type: Literal[

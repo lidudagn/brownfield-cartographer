@@ -133,30 +133,36 @@ class KnowledgeGraphWrapped:
         """Serialize CodebaseGraph into distinct JSON artifacts for downstream agents."""
         out_dir.mkdir(parents=True, exist_ok=True)
         
-        # 1. module_graph.json
-        mg_data = {
+        # 1. modules.json
+        md_data = {
             "repo_path": self.codebase.repo_path,
             "analysis_timestamp": self.codebase.analysis_timestamp,
             "modules": [m.model_dump() for m in self.codebase.modules],
-            "imports_edges": [e.model_dump() for e in self.codebase.imports_edges],
-            "calls_edges": [e.model_dump() for e in self.codebase.calls_edges],
             "functions": [f.model_dump() for f in self.codebase.functions]
         }
-        (out_dir / "module_graph.json").write_text(json.dumps(mg_data, indent=2), encoding="utf-8")
+        (out_dir / "modules.json").write_text(json.dumps(md_data, indent=2), encoding="utf-8")
         
-        # 2. lineage_graph.json
-        lg_data = {
-            "transformations": [t.model_dump() for t in self.codebase.transformations],
-            "produces_edges": [e.model_dump() for e in self.codebase.produces_edges],
-            "consumes_edges": [e.model_dump() for e in self.codebase.consumes_edges]
+        # 2. transformations.json
+        tr_data = {
+            "transformations": [t.model_dump() for t in self.codebase.transformations]
         }
-        (out_dir / "lineage_graph.json").write_text(json.dumps(lg_data, indent=2), encoding="utf-8")
+        (out_dir / "transformations.json").write_text(json.dumps(tr_data, indent=2), encoding="utf-8")
         
-        # 3. dataset_registry.json
-        dr_data = {
+        # 3. datasets.json
+        ds_data = {
             "datasets": [d.model_dump() for d in self.codebase.datasets]
         }
-        (out_dir / "dataset_registry.json").write_text(json.dumps(dr_data, indent=2), encoding="utf-8")
+        (out_dir / "datasets.json").write_text(json.dumps(ds_data, indent=2), encoding="utf-8")
+
+        # 4. edges.json
+        ed_data = {
+            "imports_edges": [e.model_dump() for e in self.codebase.imports_edges],
+            "calls_edges": [e.model_dump() for e in self.codebase.calls_edges],
+            "produces_edges": [e.model_dump() for e in self.codebase.produces_edges],
+            "consumes_edges": [e.model_dump() for e in self.codebase.consumes_edges],
+            "configures_edges": [e.model_dump() for e in getattr(self.codebase, "configures_edges", [])]
+        }
+        (out_dir / "edges.json").write_text(json.dumps(ed_data, indent=2), encoding="utf-8")
         
         # 4. analysis_report.json
         ar_data = {
