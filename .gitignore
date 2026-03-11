@@ -2,7 +2,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
-.cartography/
+# .cartography/  # Commented out to include artifacts for the assignment
 *.egg-info/
 dist/
 build/
