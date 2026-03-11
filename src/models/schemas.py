@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 # =============================================================================
@@ -35,6 +35,12 @@ class Evidence(BaseModel):
     analysis_method: Literal[
         "tree_sitter", "sqlglot", "regex", "git", "yaml_parse"
     ]
+
+    @model_validator(mode="after")
+    def validate_line_range(self) -> "Evidence":
+        if self.line_start > self.line_end:
+            raise ValueError(f"line_start ({self.line_start}) cannot be greater than line_end ({self.line_end})")
+        return self
 
     def verify(self, repo_root: str) -> bool:
         """Verify evidence exists at claimed location in the actual file."""

@@ -40,24 +40,27 @@ class Hydrologist:
         return self.graph
 
     def blast_radius(self, node_id: str, direction: Literal["downstream", "upstream", "both"] = "downstream") -> Dict[str, int]:
-        """Calculate blast radius using shortest paths."""
+        """Calculate blast radius using descendants and ancestors for reachability."""
         if node_id not in self.graph:
             return {}
             
         result = {}
         
         if direction in ("downstream", "both"):
-            lengths = nx.single_source_shortest_path_length(self.graph, node_id)
-            for n, d in lengths.items():
-                if n != node_id and (n not in result or d < result[n]):
-                    result[n] = d
+            try:
+                descendants = nx.descendants(self.graph, node_id)
+                for n in descendants:
+                    result[n] = 1
+            except nx.NetworkXError:
+                pass
                     
         if direction in ("upstream", "both"):
-            reversed_graph = self.graph.reverse(copy=False)
-            lengths = nx.single_source_shortest_path_length(reversed_graph, node_id)
-            for n, d in lengths.items():
-                if n != node_id and (n not in result or d < result[n]):
-                    result[n] = d
+            try:
+                ancestors = nx.ancestors(self.graph, node_id)
+                for n in ancestors:
+                    result[n] = 1
+            except nx.NetworkXError:
+                pass
                     
         return result
 

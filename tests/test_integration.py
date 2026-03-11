@@ -4,13 +4,15 @@ Integration tests for the full Surveyor Agent pipeline on a valid dataset.
 
 import time
 import pytest
+from unittest.mock import patch
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from src.orchestrator import run_analysis
 from src.graph.knowledge_graph import KnowledgeGraphWrapped
 
-def test_integration_pipeline_outputs():
+@patch("src.agents.semanticist.completion")
+def test_integration_pipeline_outputs(mock_completion):
     """Test full pipeline generates correct files and graph structure."""
     with TemporaryDirectory() as tmpdir:
         tmp = Path(tmpdir)
@@ -44,7 +46,9 @@ seed-paths: ["seeds"]
         
         # Verify outputs exist
         assert (out_dir / "module_graph.json").exists()
-        assert (out_dir / "module_graph.png").exists()
+        import importlib.util
+        if importlib.util.find_spec("matplotlib"):
+            assert (out_dir / "module_graph.png").exists()
         
         # Verify graph contents
         assert cg is not None

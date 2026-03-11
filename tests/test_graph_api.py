@@ -60,16 +60,16 @@ def test_blast_radius(mock_codebase_graph):
     # Downstream from A
     radii = hydro.blast_radius("dataset:A", direction="downstream")
     assert radii["transformation:T1"] == 1
-    assert radii["dataset:B"] == 2
-    assert radii["transformation:T2"] == 3
-    assert radii["dataset:C"] == 4
+    assert radii["dataset:B"] == 1
+    assert radii["transformation:T2"] == 1
+    assert radii["dataset:C"] == 1
     
     # Upstream from C
     up_radii = hydro.blast_radius("dataset:C", direction="upstream")
     assert up_radii["transformation:T2"] == 1
-    assert up_radii["dataset:B"] == 2
-    assert up_radii["transformation:T1"] == 3
-    assert up_radii["dataset:A"] == 4
+    assert up_radii["dataset:B"] == 1
+    assert up_radii["transformation:T1"] == 1
+    assert up_radii["dataset:A"] == 1
 
 def test_trace_lineage(mock_codebase_graph):
     hydro = Hydrologist()

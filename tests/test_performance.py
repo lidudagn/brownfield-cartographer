@@ -6,6 +6,7 @@ Includes synthetic 1000-file corpus generation and time limits (MF-5, F-10).
 
 import subprocess
 import time
+from unittest.mock import patch
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -14,7 +15,8 @@ import pytest
 from src.orchestrator import run_analysis
 
 
-def test_performance_jaffle_shop():
+@patch("src.agents.semanticist.completion")
+def test_performance_jaffle_shop(mock_completion):
     """Verify jaffle-shop finishes in < 5 seconds."""
     # Assuming tests are run from the project root and jaffle-shop is adjacent
     repo_path = Path(__file__).parent.parent.parent / "jaffle-shop"
@@ -36,7 +38,8 @@ def test_performance_jaffle_shop():
 
 
 @pytest.mark.timeout(65)
-def test_performance_1000_files():
+@patch("src.agents.semanticist.completion")
+def test_performance_1000_files(mock_completion):
     """Generate 1000 synthetic files and measure parallel processing time."""
     with TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
