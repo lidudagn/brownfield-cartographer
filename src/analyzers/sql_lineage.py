@@ -64,7 +64,7 @@ def detect_dialect(dbt_project_path: str) -> str:
 def test_dialect_parse(sql: str, dialects: List[str] = ["postgres", "bigquery", "snowflake", "duckdb"]) -> str:
     """Try parsing SQL with multiple dialects, return the first that works."""
     # Preprocess Jinja first so it's valid SQL
-    clean_sql, _, _ = preprocess_dbt_sql(sql, "test.sql")
+    clean_sql, _, _, _ = preprocess_dbt_sql(sql, "test.sql")
     
     for dialect in dialects:
         try:
