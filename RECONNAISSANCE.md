@@ -20,7 +20,7 @@ I didn't start with a high-level summary. I started by following the data.
     ```
 3.  **The Staging Bridge (The "Lie")**: The code claims to point to a `raw` schema, but the data is physically static CSVs.
     > [!WARNING]
-    > For the Cartographer, this "Staging Bridge" lie is a critical edge case. If the parser only looks at SQL `source()` calls without resolving the YAML metadata to the physical filesystem (seeds), it will report a broken upstream dependency. The Cartographer must unify the logical "raw" schema with the physical `seeds/` path.
+    > The `source()` call creates an indirection. Although the SQL refers to a `raw` schema table, the data is actually provided through CSV seeds defined in the YAML configuration. This makes dependency tracing harder because the logical source does not directly map to a physical database table.
 4.  **The Marts Logic**: I spent 10 minutes tracing the relationship between `customers.sql` and `orders.sql`.
 
 ---
@@ -47,16 +47,23 @@ It's a "Seed-to-Staging" flow.
 ### 3. What is the blast radius of a `stg_orders` failure?
 **Catastrophic.** 
 - `stg_orders` (6 commits) -> `marts/orders` -> `marts/customers`.
-- **Evidence**: `marts/customers.sql` line 11 explicitly `ref('orders')`.
+- **Evidence**: 
+  `models/marts/customers.sql:11`
+  `ref('orders')`
 - **Radius**: All downstream marts depending on `orders`, including `customers`. This represents the majority of business-facing analytics models.
 
 
 ### 4. Logic Concentration: Where is the "Brain"?
 Concentrated in the **Marts Layer**. 
-- **Staging** is just "Janitor work": casting types, renaming `id` to `customer_id`.
+- **Staging** primarily performs normalization tasks: type casting, renaming, and light transformations.
 - **Marts** is where the business lives: LTV aggregations and `customer_type` classification (returning vs new).
 
 ### 5. Git Velocity: Quantified (All-Time Commits)
+
+High commit velocity often indicates modules where business logic is evolving quickly, making them likely maintenance hotspots.
+
+*(Measured via `git log --oneline -- <file> | wc -l`)*
+
 | Path | Commits | Role |
 | :--- | :--- | :--- |
 | `models/marts/orders.sql` | 12 | Core Transaction Logic |
@@ -65,26 +72,28 @@ Concentrated in the **Marts Layer**.
 | `models/marts/customers.sql` | 7 | Identity/LTV Logic |
 | `models/staging/stg_orders.sql` | 6 | High-Impact Source |
 
+## Core Architecture Observation (Materializations & Naming)
+**Naming conventions indicate clear layering:**
+- `stg_*` → staging layer (no complex joins)
+- `(no prefix)` → marts layer (business logic)
+
+This convention makes automated layer detection straightforward.
+
+Most **marts** use `table` materialization (heavy reads, complex joins).
+Most **staging models** are configured as `views` (lightweight casting/renaming). This fits standard dbt best practices perfectly.
+
+**Evidence from `dbt_project.yml`**:
+```yaml
+models:
+  jaffle_shop:
+    materialized: view # Staging defaults to view
+    marts:
+      materialized: table # Marts overridden to table
+```
+
 ---
 
-## Technical Friction & Cartographer Design Hints
 
-### The "Hard" Problems found during manual Trace:
-- **Implicit Cardinalities**: Window functions such as `partition by customer_id` suggest grouping semantics that may indicate 1:N relationships. The Cartographer should flag these patterns as heuristic signals rather than definitive cardinality.
-- **Dynamic References**: I noticed some models use macros. 
-    > [!CAUTION]
-    > **Messy Case Hunt**: If `ref()` is wrapped in a macro (e.g., `{{ ref(var('model_name')) }}`), simple static analysis fails. The Cartographer must either handle macro substitution or flag "Unresolved Dynamic Linkage."
-
-### Visualization Hints for the Archivist:
-- **Lineage**: Represented as a DAG where node size corresponds to **Git Velocity** (Commits) and color intensity corresponds to **Complexity** (Lines of Logic).
-- **Blast Radius**: Highlight a node (e.g., `stg_orders`) and auto-color all downstream nodes in red to visualize the impact.
-
-### Priorities for Automation:
-1.  **S-Expression Queries**: Extract `partition by` from SQL to auto-document relationship types.
-2.  **Cross-Boundary Parsing**: Bridge the YAML/SQL/CSV gap to demystify the "Staging Bridge."
-3.  **Dynamic Reference Flagging**: Detect and warn about non-static `ref()` calls.
-
----
 
 ## Model Dependencies (Full DAG)
 
@@ -96,18 +105,18 @@ seeds (CSVs: raw_customers, raw_orders, raw_items, raw_products, raw_stores, raw
 │stg_customers│  stg_orders │stg_order_items│ stg_products │stg_locations │  stg_supplies  │
 └──────┬──────┴──────┬──────┴──────┬───────┴──────┬───────┴──────┬───────┴───────┬────────┘
        │             │             │              │              │               │
-       │             │             ├──────────────┤              │               │
-       │             │             ▼              ▼              │               │
-       │             │        order_items ◄── products           │               │
-       │             │             │                             │               │
-       │             │             ▼                             ▼               ▼
-       │             └──────► orders                        locations        supplies
-       │                        │
-       └────────────────────────┤
-                                ▼
-                            customers
+       │             ├──────────────┘              │               │
+       │             ▼                             │               │
+       │        order_items ◄── stg_products       │               │
+       │             │                             │               │
+       │             └───┬─────────┘                             ▼               ▼
+       │                 ▼                                   locations        supplies
+       │               orders
+       │                 │
+       └────────┬────────┘
+            customers
 
-                       metricflow_time_spine (standalone, no refs)
+       metricflow_time_spine (standalone, no refs)
 ```
 
 ### Key Observations
@@ -125,5 +134,6 @@ seeds (CSVs: raw_customers, raw_orders, raw_items, raw_products, raw_stores, raw
 1. **The `source()` → seed indirection**: I initially assumed `source('ecom', 'raw_customers')` pointed to a real database table. It took reading `dbt_project.yml` + `__sources.yml` + cross-referencing the `seeds/` directory to realize the "raw" schema is actually static CSVs loaded by `dbt seed`. A parser that only follows SQL references would report broken upstream dependencies.
 2. **The `cents_to_dollars` macro**: This custom macro is used in 4 staging models. Without reading `macros/cents_to_dollars.sql`, I couldn't tell if it was a simple cast or had business logic. Tracing macro dependencies across files was manual and error-prone.
 3. **Window function semantics**: Understanding the `partition by customer_id` in `orders.sql` required reading the full CTE chain to understand that it's computing `customer_order_number`, not just grouping.
-4. **The `metricflow_time_spine`**: This model has zero `ref()` calls and uses `generate_series()` — a pure utility. I initially thought it was orphaned dead code until I understood its role in MetricFlow.
+4. **The `metricflow_time_spine`**: This model has zero `ref()` calls and uses `generate_series()` — a pure utility. The important insight is that this model is **used by MetricFlow to support time-based metric joins**. Without understanding this, it looks like dead code.
+5. **Jinja templating in SQL**: Static SQL parsers struggle significantly with dynamic template tags like `{{ source('ecom','raw_customers') }}` and `{{ ref('orders') }}` without an active dbt compilation context. This makes extracting reliable static edges much harder than plain SQL parsing.
 
