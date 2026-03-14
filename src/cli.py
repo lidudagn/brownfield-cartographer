@@ -14,7 +14,7 @@ from pathlib import Path
 
 import click
 
-from src.orchestrator import run_analysis
+from src.orchestrator import run_analysis, run_incremental
 
 logging.basicConfig(
     level=logging.INFO,
@@ -140,6 +140,11 @@ def main() -> None:
     is_flag=True,
     help="Enable debug logging",
 )
+@click.option(
+    "--incremental",
+    is_flag=True,
+    help="Only re-analyze files changed since last analysis (falls back to full)",
+)
 def analyze(
     repo_path: str,
     output_dir: str,
@@ -148,6 +153,7 @@ def analyze(
     days: int,
     dry_run: bool,
     verbose: bool,
+    incremental: bool,
 ) -> None:
     """Run full analysis on a production codebase (local path or GitHub URL)."""
     if verbose:
@@ -173,15 +179,26 @@ def analyze(
     logger.info(f"Starting Cartographer analysis on {resolved_path}")
 
     try:
-        result = run_analysis(
-            repo_path=resolved_path,
-            output_dir=str(Path(output_dir).absolute()),
-            dialect=dialect,
-            workers=workers,
-            days=days,
-            dry_run=dry_run,
-            verbose=verbose,
-        )
+        if incremental:
+            logger.info("Running incremental analysis (changed files only)...")
+            result = run_incremental(
+                repo_path=resolved_path,
+                output_dir=str(Path(output_dir).absolute()),
+                dialect=dialect,
+                workers=workers,
+                days=days,
+                verbose=verbose,
+            )
+        else:
+            result = run_analysis(
+                repo_path=resolved_path,
+                output_dir=str(Path(output_dir).absolute()),
+                dialect=dialect,
+                workers=workers,
+                days=days,
+                dry_run=dry_run,
+                verbose=verbose,
+            )
 
         if result:
             logger.info("Analysis successfully completed.")
