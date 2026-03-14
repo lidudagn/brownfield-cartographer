@@ -1,3 +1,10 @@
-{"action": "incremental_update", "changed_files": 1, "previous_sha": "7be2c583", "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-14T12:26:26.154919"}
-{"action": "generate_codebase_md", "detail": "CODEBASE.md generated", "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-14T12:26:26.155891"}
-{"action": "generate_onboarding_brief", "detail": "Onboarding brief generated", "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-14T12:26:26.157104"}
+{"action": "file_discovery", "files_found": 38, "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:33:58.471843"}
+{"action": "ast_parsing", "modules_parsed": 38, "parse_errors": 0, "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:33:58.471866"}
+{"action": "sql_lineage", "sql_files_analyzed": 15, "column_lineages_extracted": 60, "unresolved_refs": 0, "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:33:58.471869"}
+{"action": "entry_point_detection", "entry_points": 13, "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:33:58.471876"}
+{"action": "git_velocity", "high_velocity_files": 1, "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:33:58.471888"}
+{"action": "graph_analysis", "nodes": 38, "edges": 14, "circular_deps": 0, "dead_code_candidates": 0, "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:33:58.471965"}
+{"action": "hydrologist", "lineage_nodes": 32, "lineage_edges": 30, "sources": 7, "sinks": 5, "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:33:58.471969"}
+{"action": "generate_codebase_md", "detail": "CODEBASE.md generated", "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:33:58.480656"}
+{"action": "generate_onboarding_brief", "detail": "Onboarding brief generated", "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:33:58.482358"}
+{"action": "token_budget_summary", "bulk_input_tokens": 0, "bulk_output_tokens": 0, "synthesis_input_tokens": 0, "synthesis_output_tokens": 0, "estimated_cost_usd": 0.0, "confidence": 1.0, "evidence_source": "instrumentation", "timestamp": "2026-03-15T00:33:58.482433"}

@@ -1,0 +1,127 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 1000px;
+                 background-color: #222222;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"font": {"color": "white"}, "group": "source", "id": "dataset:ecom.raw_customers", "label": "ecom.raw_customers", "shape": "database", "size": 20, "title": "ID: dataset:ecom.raw_customers\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "source", "id": "dataset:ecom.raw_orders", "label": "ecom.raw_orders", "shape": "database", "size": 20, "title": "ID: dataset:ecom.raw_orders\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "source", "id": "dataset:ecom.raw_items", "label": "ecom.raw_items", "shape": "database", "size": 20, "title": "ID: dataset:ecom.raw_items\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "source", "id": "dataset:ecom.raw_stores", "label": "ecom.raw_stores", "shape": "database", "size": 20, "title": "ID: dataset:ecom.raw_stores\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "source", "id": "dataset:ecom.raw_products", "label": "ecom.raw_products", "shape": "database", "size": 20, "title": "ID: dataset:ecom.raw_products\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "source", "id": "dataset:ecom.raw_supplies", "label": "ecom.raw_supplies", "shape": "database", "size": 20, "title": "ID: dataset:ecom.raw_supplies\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "transformation", "id": "transformation:supplies", "label": "supplies", "shape": "box", "size": 20, "title": "ID: transformation:supplies\nType: transformation\nFile: models/marts/supplies.sql"}, {"font": {"color": "white"}, "group": "transformation", "id": "transformation:orders", "label": "orders", "shape": "box", "size": 20, "title": "ID: transformation:orders\nType: transformation\nFile: models/marts/orders.sql"}, {"font": {"color": "white"}, "group": "transformation", "id": "transformation:products", "label": "products", "shape": "box", "size": 20, "title": "ID: transformation:products\nType: transformation\nFile: models/marts/products.sql"}, {"font": {"color": "white"}, "group": "transformation", "id": "transformation:customers", "label": "customers", "shape": "box", "size": 20, "title": "ID: transformation:customers\nType: transformation\nFile: models/marts/customers.sql"}, {"font": {"color": "white"}, "group": "transformation", "id": "transformation:order_items", "label": "order_items", "shape": "box", "size": 20, "title": "ID: transformation:order_items\nType: transformation\nFile: models/marts/order_items.sql"}, {"font": {"color": "white"}, "group": "transformation", "id": "transformation:locations", "label": "locations", "shape": "box", "size": 20, "title": "ID: transformation:locations\nType: transformation\nFile: models/marts/locations.sql"}, {"font": {"color": "white"}, "group": "transformation", "id": "transformation:metricflow_time_spine", "label": "metricflow_time_spine", "shape": "box", "size": 20, "title": "ID: transformation:metricflow_time_spine\nType: transformation\nFile: models/marts/metricflow_time_spine.sql"}, {"font": {"color": "white"}, "group": "staging", "id": "transformation:stg_supplies", "label": "stg_supplies", "shape": "box", "size": 20, "title": "ID: transformation:stg_supplies\nType: transformation\nFile: models/staging/stg_supplies.sql"}, {"font": {"color": "white"}, "group": "staging", "id": "transformation:stg_orders", "label": "stg_orders", "shape": "box", "size": 20, "title": "ID: transformation:stg_orders\nType: transformation\nFile: models/staging/stg_orders.sql"}, {"font": {"color": "white"}, "group": "staging", "id": "transformation:stg_customers", "label": "stg_customers", "shape": "box", "size": 20, "title": "ID: transformation:stg_customers\nType: transformation\nFile: models/staging/stg_customers.sql"}, {"font": {"color": "white"}, "group": "staging", "id": "transformation:stg_order_items", "label": "stg_order_items", "shape": "box", "size": 20, "title": "ID: transformation:stg_order_items\nType: transformation\nFile: models/staging/stg_order_items.sql"}, {"font": {"color": "white"}, "group": "staging", "id": "transformation:stg_locations", "label": "stg_locations", "shape": "box", "size": 20, "title": "ID: transformation:stg_locations\nType: transformation\nFile: models/staging/stg_locations.sql"}, {"font": {"color": "white"}, "group": "staging", "id": "transformation:stg_products", "label": "stg_products", "shape": "box", "size": 20, "title": "ID: transformation:stg_products\nType: transformation\nFile: models/staging/stg_products.sql"}, {"font": {"color": "white"}, "group": "dataset", "id": "dataset:stg_supplies", "label": "stg_supplies", "shape": "database", "size": 20, "title": "ID: dataset:stg_supplies\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "dataset", "id": "dataset:order_items", "label": "order_items", "shape": "database", "size": 20, "title": "ID: dataset:order_items\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "dataset", "id": "dataset:stg_orders", "label": "stg_orders", "shape": "database", "size": 20, "title": "ID: dataset:stg_orders\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "dataset", "id": "dataset:stg_products", "label": "stg_products", "shape": "database", "size": 20, "title": "ID: dataset:stg_products\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "dataset", "id": "dataset:stg_customers", "label": "stg_customers", "shape": "database", "size": 20, "title": "ID: dataset:stg_customers\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "dataset", "id": "dataset:orders", "label": "orders", "shape": "database", "size": 20, "title": "ID: dataset:orders\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "dataset", "id": "dataset:stg_order_items", "label": "stg_order_items", "shape": "database", "size": 20, "title": "ID: dataset:stg_order_items\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "dataset", "id": "dataset:stg_locations", "label": "stg_locations", "shape": "database", "size": 20, "title": "ID: dataset:stg_locations\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "dataset", "id": "dataset:supplies", "label": "supplies", "shape": "database", "size": 20, "title": "ID: dataset:supplies\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "dataset", "id": "dataset:products", "label": "products", "shape": "database", "size": 20, "title": "ID: dataset:products\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "dataset", "id": "dataset:customers", "label": "customers", "shape": "database", "size": 20, "title": "ID: dataset:customers\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "dataset", "id": "dataset:locations", "label": "locations", "shape": "database", "size": 20, "title": "ID: dataset:locations\nType: dataset\nStorage: table"}, {"font": {"color": "white"}, "group": "dataset", "id": "dataset:metricflow_time_spine", "label": "metricflow_time_spine", "shape": "database", "size": 20, "title": "ID: dataset:metricflow_time_spine\nType: dataset\nStorage: table"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "#666666", "from": "dataset:ecom.raw_customers", "title": "Type: consumes", "to": "transformation:stg_customers"}, {"arrows": "to", "color": "#666666", "from": "dataset:ecom.raw_orders", "title": "Type: consumes", "to": "transformation:stg_orders"}, {"arrows": "to", "color": "#666666", "from": "dataset:ecom.raw_items", "title": "Type: consumes", "to": "transformation:stg_order_items"}, {"arrows": "to", "color": "#666666", "from": "dataset:ecom.raw_stores", "title": "Type: consumes", "to": "transformation:stg_locations"}, {"arrows": "to", "color": "#666666", "from": "dataset:ecom.raw_products", "title": "Type: consumes", "to": "transformation:stg_products"}, {"arrows": "to", "color": "#666666", "from": "dataset:ecom.raw_supplies", "title": "Type: consumes", "to": "transformation:stg_supplies"}, {"arrows": "to", "color": "#aaaaaa", "from": "transformation:supplies", "title": "Type: produces", "to": "dataset:supplies"}, {"arrows": "to", "color": "#aaaaaa", "from": "transformation:orders", "title": "Type: produces", "to": "dataset:orders"}, {"arrows": "to", "color": "#aaaaaa", "from": "transformation:products", "title": "Type: produces", "to": "dataset:products"}, {"arrows": "to", "color": "#aaaaaa", "from": "transformation:customers", "title": "Type: produces", "to": "dataset:customers"}, {"arrows": "to", "color": "#aaaaaa", "from": "transformation:order_items", "title": "Type: produces", "to": "dataset:order_items"}, {"arrows": "to", "color": "#aaaaaa", "from": "transformation:locations", "title": "Type: produces", "to": "dataset:locations"}, {"arrows": "to", "color": "#aaaaaa", "from": "transformation:metricflow_time_spine", "title": "Type: produces", "to": "dataset:metricflow_time_spine"}, {"arrows": "to", "color": "#aaaaaa", "from": "transformation:stg_supplies", "title": "Type: produces", "to": "dataset:stg_supplies"}, {"arrows": "to", "color": "#aaaaaa", "from": "transformation:stg_orders", "title": "Type: produces", "to": "dataset:stg_orders"}, {"arrows": "to", "color": "#aaaaaa", "from": "transformation:stg_customers", "title": "Type: produces", "to": "dataset:stg_customers"}, {"arrows": "to", "color": "#aaaaaa", "from": "transformation:stg_order_items", "title": "Type: produces", "to": "dataset:stg_order_items"}, {"arrows": "to", "color": "#aaaaaa", "from": "transformation:stg_locations", "title": "Type: produces", "to": "dataset:stg_locations"}, {"arrows": "to", "color": "#aaaaaa", "from": "transformation:stg_products", "title": "Type: produces", "to": "dataset:stg_products"}, {"arrows": "to", "color": "#666666", "from": "dataset:stg_supplies", "title": "Type: consumes", "to": "transformation:supplies"}, {"arrows": "to", "color": "#666666", "from": "dataset:stg_supplies", "title": "Type: consumes", "to": "transformation:order_items"}, {"arrows": "to", "color": "#666666", "from": "dataset:order_items", "title": "Type: consumes", "to": "transformation:orders"}, {"arrows": "to", "color": "#666666", "from": "dataset:stg_orders", "title": "Type: consumes", "to": "transformation:orders"}, {"arrows": "to", "color": "#666666", "from": "dataset:stg_orders", "title": "Type: consumes", "to": "transformation:order_items"}, {"arrows": "to", "color": "#666666", "from": "dataset:stg_products", "title": "Type: consumes", "to": "transformation:products"}, {"arrows": "to", "color": "#666666", "from": "dataset:stg_products", "title": "Type: consumes", "to": "transformation:order_items"}, {"arrows": "to", "color": "#666666", "from": "dataset:stg_customers", "title": "Type: consumes", "to": "transformation:customers"}, {"arrows": "to", "color": "#666666", "from": "dataset:orders", "title": "Type: consumes", "to": "transformation:customers"}, {"arrows": "to", "color": "#666666", "from": "dataset:stg_order_items", "title": "Type: consumes", "to": "transformation:order_items"}, {"arrows": "to", "color": "#666666", "from": "dataset:stg_locations", "title": "Type: consumes", "to": "transformation:locations"}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"layout": {"hierarchical": {"enabled": true, "direction": "UD", "sortMethod": "directed", "nodeSpacing": 200, "levelSeparation": 150}}, "physics": {"hierarchicalRepulsion": {"centralGravity": 0.0, "springLength": 100, "springConstant": 0.01, "nodeDistance": 150, "damping": 0.09}, "solver": "hierarchicalRepulsion"}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

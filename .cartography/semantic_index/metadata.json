@@ -1,0 +1,82 @@
+[
+  {
+    "index": 0,
+    "path": "models/marts/supplies.sql",
+    "purpose": "transforms data from models/staging/stg_supplies.sql. using CTEs: supplies. producing a business-facing mart dataset.",
+    "domain": "Models",
+    "language": "jinja_sql",
+    "pagerank": 0.030026815193742167
+  },
+  {
+    "index": 1,
+    "path": "models/marts/orders.sql",
+    "purpose": "transforms data from models/marts/order_items.sql, models/staging/stg_orders.sql. using CTEs: orders, order_items, order_items_summary, compute_booleans, customer_order_count. producing a business-facing mart dataset.",
+    "domain": "Models",
+    "language": "jinja_sql",
+    "pagerank": 0.08760079289226493
+  },
+  {
+    "index": 2,
+    "path": "models/marts/products.sql",
+    "purpose": "transforms data from models/staging/stg_products.sql. using CTEs: products. producing a business-facing mart dataset.",
+    "domain": "Models",
+    "language": "jinja_sql",
+    "pagerank": 0.030026815193742167
+  },
+  {
+    "index": 3,
+    "path": "macros/generate_schema_name.sql",
+    "purpose": "Module at macros/generate_schema_name.sql (jinja_sql, 23 lines).",
+    "domain": "Macros",
+    "language": "jinja_sql",
+    "pagerank": 0.019429603647909695
+  },
+  {
+    "index": 4,
+    "path": "models/marts/customers.sql",
+    "purpose": "transforms data from models/marts/orders.sql, models/staging/stg_customers.sql. using CTEs: customers, orders, customer_orders_summary, joined. producing a business-facing mart dataset.",
+    "domain": "Models",
+    "language": "jinja_sql",
+    "pagerank": 0.11040154741772666
+  },
+  {
+    "index": 5,
+    "path": "models/marts/order_items.sql",
+    "purpose": "transforms data from models/staging/stg_orders.sql, models/staging/stg_supplies.sql, models/staging/stg_order_items.sql, models/staging/stg_products.sql. using CTEs: order_items, orders, products, supplies, order_supplies_summary, joined. producing a business-facing mart dataset.",
+    "domain": "Models",
+    "language": "jinja_sql",
+    "pagerank": 0.06773652849743955
+  },
+  {
+    "index": 6,
+    "path": "models/marts/locations.sql",
+    "purpose": "transforms data from models/staging/stg_locations.sql. using CTEs: locations. producing a business-facing mart dataset.",
+    "domain": "Models",
+    "language": "jinja_sql",
+    "pagerank": 0.035944893859942144
+  },
+  {
+    "index": 7,
+    "path": "models/staging/stg_supplies.sql",
+    "purpose": "Ingests data from source:ecom.raw_supplies. using CTEs: source, renamed. staging and normalizing raw data.",
+    "domain": "Models",
+    "language": "jinja_sql",
+    "pagerank": 0.024934700385253847
+  },
+  {
+    "index": 8,
+    "path": "models/staging/stg_orders.sql",
+    "purpose": "Ingests data from source:ecom.raw_orders. using CTEs: source, renamed. staging and normalizing raw data.",
+    "domain": "Models",
+    "language": "jinja_sql",
+    "pagerank": 0.024934700385253847
+  },
+  {
+    "index": 9,
+    "path": "models/staging/stg_products.sql",
+    "purpose": "Ingests data from source:ecom.raw_products. using CTEs: source, renamed. staging and normalizing raw data.",
+    "domain": "Models",
+    "language": "jinja_sql",
+    "pagerank": 0.024934700385253847
+  }
+]
