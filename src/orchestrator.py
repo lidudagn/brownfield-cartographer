@@ -58,7 +58,7 @@ from src.analyzers.sql_lineage import (
     extract_sql_dependencies,
 )
 from src.analyzers.tree_sitter_analyzer import TreeSitterAnalyzer
-from src.graph.knowledge_graph import KnowledgeGraphWrapped
+from src.graph.knowledge_graph import KnowledgeGraphWrapped, visualize_interactive_lineage
 from src.models.schemas import (
     AnalysisCheckpoint,
     CodebaseGraph,
@@ -459,6 +459,10 @@ def run_analysis(
     wrapper.save_artifacts(out)
     wrapper.visualize(png_path)
     
+    # Save the strictly lineage-based interactive graph
+    visualize_interactive_lineage(hydro.graph, out / "lineage_graph.html")
+
+    
     duration = time.time() - start_time
     logger.info(f"Analysis complete in {duration:.2f}s. Saved to {output_dir}")
     
@@ -588,6 +592,9 @@ def run_incremental(
         wrapper_new = KnowledgeGraphWrapped(cg)
         wrapper_new.save_artifacts(out)
         wrapper_new.visualize(out / "module_graph.png")
+        
+        visualize_interactive_lineage(hydro.graph, out / "lineage_graph.html")
+
         
         # Update last commit
         sha_result = subprocess.run(

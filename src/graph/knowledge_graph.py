@@ -96,6 +96,203 @@ def visualize_graph(graph: nx.DiGraph, output_path: Path) -> None:
     logger.info(f"Generated visualization at {output_path}")
 
 
+def visualize_interactive_graph(graph: nx.DiGraph, output_path: Path) -> None:
+    """Generate an interactive HTML visualization using pyvis."""
+    try:
+        from pyvis.network import Network
+    except ImportError:
+        logger.warning("pyvis not installed; skipping interactive visualization")
+        return
+
+    # Create network
+    net = Network(height="1000px", width="100%", bgcolor="#222222", font_color="white", directed=True)
+    
+    # Hierarchical layout for directed flow (like a DAG)
+    net.set_options("""
+    var options = {
+      "layout": {
+        "hierarchical": {
+          "enabled": true,
+          "direction": "LR",
+          "sortMethod": "directed",
+          "nodeSpacing": 150,
+          "levelSeparation": 250
+        }
+      },
+      "physics": {
+        "hierarchicalRepulsion": {
+          "centralGravity": 0.0,
+          "springLength": 100,
+          "springConstant": 0.01,
+          "nodeDistance": 150,
+          "damping": 0.09
+        },
+        "solver": "hierarchicalRepulsion"
+      }
+    }
+    """)
+    
+    # Calculate sizes and colors similar to matplotlib version
+    try:
+        pr = nx.pagerank(graph)
+    except Exception:
+        pr = {n: 0.1 for n in graph.nodes()}
+        
+    velocities = {}
+    for n in graph.nodes():
+        node_attr = graph.nodes[n].get("node")
+        if node_attr and hasattr(node_attr, "change_velocity_30d"):
+            velocities[n] = node_attr.change_velocity_30d
+        else:
+            velocities[n] = 0.0
+            
+    # Filters
+    ignore_patterns = ["package-lock", "package.json", "taskfile", "poetry.lock", "makefile", "dockerfile", "dbt_project", ".gitignore", "generate_schema_name"]
+    valid_nodes = set()
+    
+    for n in graph.nodes():
+        path_str = str(n).lower()
+        if any(pat in path_str for pat in ignore_patterns):
+            continue
+        valid_nodes.add(n)
+        
+    # Add nodes
+    for n in valid_nodes:
+        # Size based on pagerank
+        size = 15 + pr.get(n, 0) * 80
+        
+        path_str = str(n).lower()
+        
+        # Color based on domain/type
+        if "source" in path_str or "raw" in path_str or "seed" in path_str:
+            color = "#2ca02c" # green
+            group = "sources"
+        elif "staging" in path_str or "stg_" in path_str:
+            color = "#1f77b4" # blue
+            group = "staging"
+        elif "marts" in path_str or "core" in path_str:
+            color = "#ff7f0e" # orange
+            group = "marts"
+        elif "macro" in path_str:
+            color = "#9467bd" # purple
+            group = "macros"
+        else:
+            color = "#7f7f7f" # gray
+            group = "other"
+            
+        # Highlight high pagerank hubs
+        if pr.get(n, 0) > 0.05:
+            color = "#d62728" # red (high impact)
+        
+        label = Path(str(n)).stem
+        title = f"Module: {n}\nPageRank: {pr.get(n, 0):.4f}\nVelocity: {velocities.get(n, 0):.2f}\nGroup: {group}"
+        
+        # Add node
+        net.add_node(n, label=label, title=title, size=size, color=color, group=group)
+
+    # Add edges
+    for u, v, data in graph.edges(data=True):
+        if u in valid_nodes and v in valid_nodes:
+            # Drop self-loops from the vis to keep hierarchical clean
+            if u != v:
+                weight = data.get("weight", 1)
+                net.add_edge(u, v, value=weight, title=f"Weight: {weight}")
+
+    # Save to file
+    try:
+        net.write_html(str(output_path))
+        logger.info(f"Generated interactive visualization at {output_path}")
+    except Exception as e:
+        logger.warning(f"Failed to generate interactive visualization: {e}")
+
+
+def visualize_interactive_lineage(lineage_graph: nx.DiGraph, output_path: Path) -> None:
+    """Generate an interactive HTML visualization for the pure Data Lineage DAG."""
+    try:
+        from pyvis.network import Network
+    except ImportError:
+        logger.warning("pyvis not installed; skipping interactive lineage visualization")
+        return
+
+    net = Network(height="1000px", width="100%", bgcolor="#222222", font_color="white", directed=True)
+    
+    # Hierarchical layout strictly for DAG
+    net.set_options("""
+    var options = {
+      "layout": {
+        "hierarchical": {
+          "enabled": true,
+          "direction": "UD",
+          "sortMethod": "directed",
+          "nodeSpacing": 200,
+          "levelSeparation": 150
+        }
+      },
+      "physics": {
+        "hierarchicalRepulsion": {
+          "centralGravity": 0.0,
+          "springLength": 100,
+          "springConstant": 0.01,
+          "nodeDistance": 150,
+          "damping": 0.09
+        },
+        "solver": "hierarchicalRepulsion"
+      }
+    }
+    """)
+    
+    for n, data in lineage_graph.nodes(data=True):
+        node_type = data.get("type", "unknown")
+        
+        # Base node styling
+        size = 20
+        label = data.get("name", str(n).replace("dataset:", "").replace("transformation:", ""))
+        title = f"ID: {n}\nType: {node_type}"
+        
+        # Color coding & Shapes based on FDE feedback
+        if node_type == "dataset":
+            storage = data.get("storage_type", "")
+            if "raw" in label or "source" in label:
+                color = "#2ca02c"  # green (raw sources)
+                group = "source"
+            else:
+                color = "#ff7f0e"  # orange (marts/datasets)
+                group = "dataset"
+            shape = "database"
+            title += f"\nStorage: {storage}"
+        elif node_type == "transformation":
+            if "stg_" in label or "staging" in label:
+                color = "#1f77b4"  # blue (staging models)
+                group = "staging"
+            else:
+                color = "#9467bd"  # purple (other transforms)
+                group = "transformation"
+            shape = "box"
+            title += f"\nFile: {data.get('source_file', '')}"
+        else:
+            color = "#7f7f7f"
+            shape = "ellipse"
+            group = "other"
+
+        net.add_node(n, label=label, title=title, size=size, color=color, shape=shape, group=group)
+
+    for u, v, data in lineage_graph.edges(data=True):
+        if u != v:
+            edge_type = data.get("type", "")
+            title = f"Type: {edge_type}"
+            color = "#666666" if edge_type == "consumes" else "#aaaaaa"
+            net.add_edge(u, v, title=title, color=color)
+
+    try:
+        net.write_html(str(output_path))
+        logger.info(f"Generated interactive LINEAGE visualization at {output_path}")
+    except Exception as e:
+        logger.warning(f"Failed to generate interactive LINEAGE visualization: {e}")
+
+
+
+
+
 # =============================================================================
 # Graph Wrapper
 # =============================================================================
@@ -120,6 +317,10 @@ class KnowledgeGraphWrapped:
     def visualize(self, output_path: Path) -> None:
         """Expose visualization externally."""
         visualize_graph(self.nx_graph, output_path)
+        
+        # Generate interactive HTML graph alongside the PNG
+        html_path = output_path.with_suffix(".html")
+        visualize_interactive_graph(self.nx_graph, html_path)
 
     def save(self, filepath: Path) -> None:
         """Serialize CodebaseGraph to JSON."""
