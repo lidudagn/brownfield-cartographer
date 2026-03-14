@@ -11,3 +11,9 @@ cartography_out/
 .cartography_jaffle/
 .cartography_jaffle_v2/
 .cartography_test*/
+
+# Temporary/generated files
+streamlit.log
+.cartography_final/
+.cartography_final_local/
+.cartography_roo_video/
