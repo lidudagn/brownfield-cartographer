@@ -37,6 +37,18 @@ seed-paths: ["seeds"]
         select * from {{ ref('raw_customers') }}
         """)
 
+        # Configure mock completion to return a serializable object
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock(message=MagicMock(content="Test purpose"))]
+        mock_response.usage = MagicMock(prompt_tokens=10, completion_tokens=10)
+        mock_completion.return_value = mock_response
+
+        # Configure mock completion to return a serializable object
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock(message=MagicMock(content="Test purpose"))]
+        mock_response.usage = MagicMock(prompt_tokens=10, completion_tokens=10)
+        mock_completion.return_value = mock_response
+
         # Run pipeline
         out_dir = tmp / ".cartography"
         cg = run_analysis(
