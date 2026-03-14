@@ -28,50 +28,363 @@ st.set_page_config(
 # ── Custom CSS ──────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
-    html, body, [class*="st-"] {
-        font-family: 'Inter', sans-serif;
+    /* Global Variables & Base Typography */
+    :root {
+        --bg-color: #0d1117;
+        --surface-color: rgba(22, 27, 34, 0.6);
+        --surface-border: rgba(255, 255, 255, 0.08);
+        --accent-glow: rgba(56, 189, 248, 0.15);
+        --text-primary: #f0f6fc;
+        --text-secondary: #8b949e;
+        --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        --gradient-surface: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
     }
 
+    html, body, [data-testid="stAppViewBlockContainer"], .stApp {
+        background-color: #0d1117 !important;
+        color: #f0f6fc !important;
+    }
+
+    [data-testid="stSidebar"], [data-testid="stSidebar"] > div {
+        background-color: #161b22 !important;
+    }
+
+    /* Force all text elements to be light */
+    p, span, div, label, .stMarkdown, [data-testid="stText"] {
+        color: #f0f6fc !important;
+    }
+
+    /* Target specific Streamlit elements that often stay white */
+    .element-container, .stAlert, .stChatMessage, .stExpander, .stTabs {
+        background-color: transparent !important;
+    }
+
+    /* High-priority override for the main container */
+    .main .block-container {
+        background-color: #0d1117 !important;
+        color: #f0f6fc !important;
+    }
+
+
+    /* Main Header Container */
     .main-header {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-        padding: 2rem 2.5rem;
-        border-radius: 16px;
-        margin-bottom: 1.5rem;
-        color: white;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        position: relative;
+        background: var(--gradient-surface);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        padding: 2.5rem 3rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        border: 1px solid var(--surface-border);
+        box-shadow: 
+            0 4px 24px -1px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        overflow: hidden;
     }
+    
+    /* Header Glow Effect */
+    .main-header::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.5), transparent);
+    }
+
     .main-header h1 {
         margin: 0;
-        font-size: 2rem;
-        font-weight: 700;
-        letter-spacing: -0.5px;
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(to right, #fff, #9ca3af);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.03em;
     }
+    
     .main-header p {
         margin: 0.5rem 0 0 0;
-        opacity: 0.8;
-        font-size: 1rem;
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        font-weight: 400;
     }
 
+    /* Metric Cards (Glassmorphism) */
     .metric-card {
-        background: linear-gradient(135deg, #1e293b, #334155);
-        padding: 1.2rem;
-        border-radius: 12px;
+        background: var(--gradient-surface);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        padding: 1.5rem;
+        border-radius: 16px;
         text-align: center;
-        color: white;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border: 1px solid var(--surface-border);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
     }
-    .metric-card h3 { margin: 0; font-size: 1.8rem; font-weight: 700; }
-    .metric-card p  { margin: 0.3rem 0 0 0; font-size: 0.85rem; opacity: 0.7; }
-
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
+    
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4), 0 0 16px var(--accent-glow);
+        border-color: rgba(255, 255, 255, 0.15);
     }
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 8px 8px 0 0;
-        padding: 10px 20px;
+    
+    .metric-card h3 { 
+        margin: 0; 
+        font-size: 2.5rem; 
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.1;
+    }
+    
+    .metric-card p { 
+        margin: 0.5rem 0 0 0; 
+        font-size: 0.9rem; 
         font-weight: 500;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* Tabs Styling - Pill Design */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 0.5rem;
+        background-color: transparent;
+        padding-bottom: 0.5rem;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 99px;
+        padding: 0.5rem 1.25rem;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 500;
+        font-size: 0.95rem;
+        background-color: transparent;
+        border: 1px solid transparent;
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+    }
+    
+    .stTabs [data-baseweb="tab"]:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #fff;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: var(--surface-color) !important;
+        border: 1px solid var(--surface-border) !important;
+        color: #fff !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Remove default tab border */
+    .stTabs [data-baseweb="tab-border"] {
+        display: none;
+    }
+    
+    /* Input Fields & Select Boxes */
+    div[data-baseweb="input"] > div, 
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="base-input"] {
+        background-color: rgba(13, 17, 23, 0.7) !important;
+        border-radius: 8px;
+        border: 1px solid var(--surface-border) !important;
+        color: #fff !important;
+        transition: all 0.2s ease;
+    }
+    
+    div[data-baseweb="input"] > div:hover, 
+    div[data-baseweb="select"] > div:hover {
+        border-color: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    /* Buttons */
+    /* Buttons - Clean White Design */
+    .stButton > button {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid rgba(0, 0, 0, 0.2) !important;
+        border-radius: 6px !important;
+        padding: 0.5rem 1rem !important;
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 800 !important;
+        font-size: 0.85rem !important;
+        text-transform: none !important;
+        letter-spacing: normal !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .stButton > button:hover {
+        background-color: #f3f4f6 !important;
+        border-color: rgba(0, 0, 0, 0.2) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .stButton > button:active {
+        transform: translateY(0);
+        background-color: #e5e7eb !important;
+    }
+    
+    /* Sidebar Restyling */
+    [data-testid="stSidebar"] {
+        background-color: rgba(13, 17, 23, 0.8) !important;
+        border-right: 1px solid var(--surface-border);
+    }
+    
+    [data-testid="stSidebar"] hr {
+        border-color: var(--surface-border);
+        margin: 1.5rem 0;
+    }
+
+    /* ----------- Navigator Chat Interface ----------- */
+    
+    /* Chat Message Bubbles */
+    [data-testid="stChatMessage"] {
+        background-color: var(--surface-color) !important;
+        border: 1px solid var(--surface-border) !important;
+        border-radius: 12px !important;
+        padding: 1.5rem !important;
+        margin-bottom: 1rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important; /* Reverting flex to prevent internal squishing */
+    }
+    
+    /* Ensure Avatars have space in block layout */
+    [data-testid="stChatMessageAvatar"] {
+        float: left !important;
+        margin-right: 1.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Clear float and handle text wrapping */
+    [data-testid="stChatMessageContent"] {
+        display: block !important;
+        overflow-wrap: break-word !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        width: auto !important;
+    }
+    
+    [data-testid="stChatMessageContent"]::after {
+        content: "";
+        clear: both;
+        display: table;
+    }
+    
+    /* Chat Message Text inside bubbles */
+    [data-testid="stChatMessage"] * {
+        color: #ffffff !important;
+    }
+    
+    /* User Message distinct style */
+    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
+        background-color: rgba(59, 130, 246, 0.15) !important;
+        border-color: rgba(59, 130, 246, 0.3) !important;
+    }
+    
+    /* ----------- Chat Input Box ----------- */
+    
+    /* The outer container */
+    [data-testid="stChatInput"] {
+        background-color: transparent !important;
+        border: none !important;
+        padding-bottom: 2rem !important; /* Breathing room at bottom */
+    }
+    
+    /* Force full width on the generic streamlit wrapper */
+    .stChatInput {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* The inner input area container */
+    [data-testid="stChatInput"] > div,
+    .stChatInputContainer {
+        background-color: #1e293b !important; /* Dark slate background */
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 12px !important;
+        padding: 0.75rem 1rem !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+        max-width: 100% !important; /* FORCE full width */
+    }
+    
+    /* The actual text area where user types */
+    [data-testid="stChatInputTextArea"] {
+        color: #ffffff !important;
+        background-color: transparent !important;
+        caret-color: #ffffff !important;
+        padding: 0 !important;
+        min-height: 24px !important;
+        flex-grow: 1 !important;
+        width: 100% !important;
+        border: none !important;
+        outline: none !important;
+    }
+    
+    /* Fallback for generic textareas inside the chat input block */
+    [data-testid="stChatInput"] textarea {
+        color: #ffffff !important;
+        background-color: transparent !important;
+        -webkit-text-fill-color: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        flex-grow: 1 !important;
+        width: 100% !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* Placeholder text */
+    [data-testid="stChatInput"] textarea::placeholder {
+        color: rgba(255, 255, 255, 0.6) !important;
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.6) !important;
+    }
+    
+    /* Send Button inside chat input */
+    [data-testid="stChatInputSubmitButton"] {
+        color: #ffffff !important;
+    }
+    [data-testid="stChatInputSubmitButton"] svg {
+        fill: #38bdf8 !important; /* Make send arrow prominent */
+    }
+    
+    /* Number Input Stepper Buttons */
+    button[kind="stepUp"], button[kind="stepDown"] {
+        background-color: rgba(255,255,255,0.1) !important;
+        color: white !important;
+    }
+    button[kind="stepUp"]:hover, button[kind="stepDown"]:hover {
+        background-color: rgba(255,255,255,0.2) !important;
+    }
+
+    /* Inline Code Blocks in Markdown */
+    .stMarkdown code {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: #e5e7eb !important;
+        padding: 0.2rem 0.4rem !important;
+        border-radius: 4px !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+
+    /* Fix specific white boxes rendered by Streamlit */
+    .element-container, .stMarkdown {
+        background-color: transparent !important;
+    }
+    
+    /* Expander Arrow */
+    summary svg {
+        fill: white !important;
+        color: white !important;
     }
 </style>
 """, unsafe_allow_html=True)
