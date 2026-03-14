@@ -22,6 +22,7 @@ dependencies = [
     "langchain-core>=0.3.0",
     "tenacity>=8.2.0",
     "pyvis>=0.3.2",
+    "streamlit>=1.55.0",
 ]
 
 [project.optional-dependencies]

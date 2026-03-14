@@ -262,5 +262,28 @@ def query(
     nav.run_repl()
 
 
+@main.command()
+def ui() -> None:
+    """Launch the interactive Streamlit Web UI (optional frontend)."""
+    app_path = Path(__file__).resolve().parent.parent / "app.py"
+    if not app_path.exists():
+        click.echo(f"Error: app.py not found at {app_path}", err=True)
+        raise SystemExit(1)
+
+    click.echo("🗺️  Launching Brownfield Cartographer Web UI...")
+    click.echo(f"   App: {app_path}")
+    click.echo("   Press Ctrl+C to stop.\n")
+    try:
+        subprocess.run(
+            ["streamlit", "run", str(app_path), "--server.headless", "true"],
+            check=True,
+        )
+    except KeyboardInterrupt:
+        click.echo("\nUI stopped.")
+    except FileNotFoundError:
+        click.echo("Error: streamlit not installed. Run: uv add streamlit", err=True)
+        raise SystemExit(1)
+
+
 if __name__ == "__main__":
     main()
