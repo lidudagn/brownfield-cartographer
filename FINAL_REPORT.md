@@ -1,6 +1,6 @@
 # The Brownfield Cartographer — Final Report
 
-**Engineer:** Lidya  
+**Engineer:** Lidya Dagnew  
 **Date:** March 15, 2026  
 **Target Codebases:** `dbt-labs/jaffle-shop` (primary), `Roo-Code` (self-audit)
 
