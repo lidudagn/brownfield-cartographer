@@ -17,7 +17,9 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple, Annotated, TypedDict
+
+from pydantic import BaseModel, Field
 
 from src.agents.hydrologist import Hydrologist
 from src.graph.knowledge_graph import KnowledgeGraphWrapped
@@ -31,31 +33,17 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 
-class NavigatorEvidence:
-    """Evidence citation for Navigator responses."""
+class NavigatorEvidence(BaseModel):
+    """Evidence citation for Navigator responses (Pydantic model)."""
 
-    def __init__(
-        self,
-        file: str,
-        line_range: Tuple[int, int] = (0, 0),
-        analysis_method: str = "static_analysis",
-        node_id: Optional[str] = None,
-        confidence: float = 1.0,
-    ):
-        self.file = file
-        self.line_range = line_range
-        self.analysis_method = analysis_method
-        self.node_id = node_id
-        self.confidence = confidence
+    file: str
+    line_range: Tuple[int, int] = (0, 0)
+    analysis_method: str = "static_analysis"
+    node_id: Optional[str] = None
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
-            "file": self.file,
-            "line_range": self.line_range,
-            "analysis_method": self.analysis_method,
-            "node_id": self.node_id,
-            "confidence": self.confidence,
-        }
+        return self.model_dump()
 
     def __repr__(self) -> str:
         return f"[{self.analysis_method}] {self.file}:{self.line_range[0]}-{self.line_range[1]}"
@@ -602,7 +590,7 @@ class NavigatorAgent:
 
 
 # =============================================================================
-# LangGraph Integration (Optional — uses simple REPL as fallback)
+# LangGraph Integration — Real ReAct Tool-Calling Agent
 # =============================================================================
 
 
@@ -612,6 +600,11 @@ def build_langgraph_navigator(
     repo_path: Optional[str] = None,
 ):
     """Build a LangGraph StateGraph agent with the 4 Navigator tools.
+
+    Implements a real ReAct-style agent:
+    1. agent_node: LLM decides which tool to call (or respond directly)
+    2. tool_node: Dispatches to the selected tool
+    3. Conditional edge: loops back to agent if more reasoning is needed
 
     Returns the compiled graph, or None if LangGraph is not available.
     """
@@ -624,52 +617,170 @@ def build_langgraph_navigator(
 
         tools_impl = NavigatorTools(graph, hydro, repo_path)
 
-        # Define tools as langchain tool functions
+        # Define tools as langchain @tool functions
         @tool
         def find_implementation(concept: str) -> str:
-            """Search for where a concept is implemented in the codebase."""
+            """Search for where a concept is implemented in the codebase. Use this when the user asks 'where is X implemented' or 'find X'."""
             return tools_impl.find_implementation(concept)
 
         @tool
         def trace_lineage(dataset: str, direction: str = "upstream") -> str:
-            """Trace data lineage upstream or downstream from a dataset."""
+            """Trace data lineage upstream or downstream from a dataset. Use this when the user asks about data flow, lineage, or dependencies of a dataset."""
             return tools_impl.trace_lineage(dataset, direction)
 
         @tool
         def blast_radius(module_path: str) -> str:
-            """Calculate what would break if a module changes."""
+            """Calculate what would break if a module changes. Use this when the user asks about impact analysis or 'what breaks if X changes'."""
             return tools_impl.blast_radius(module_path)
 
         @tool
         def explain_module(path: str) -> str:
-            """Explain what a specific module does with evidence citations."""
+            """Explain what a specific module does with evidence citations. Use this when the user asks 'what does X do' or 'explain X'."""
             return tools_impl.explain_module(path)
 
-        tool_registry = {
-            "find_implementation": find_implementation,
-            "trace_lineage": trace_lineage,
-            "blast_radius": blast_radius,
-            "explain_module": explain_module,
-        }
+        all_tools = [find_implementation, trace_lineage, blast_radius, explain_module]
+        tool_map = {t.name: t for t in all_tools}
 
         class NavigatorState(TypedDict):
             messages: Annotated[list, add_messages]
 
+        # --- Agent Node: Decide which tool to call ---
         def agent_node(state: NavigatorState) -> NavigatorState:
-            """Process user message and decide which tool to call."""
-            last_msg = state["messages"][-1]
-            if isinstance(last_msg, HumanMessage):
-                query = last_msg.content
-                # Simple routing
-                nav = NavigatorAgent(graph, hydro, repo_path)
-                result = nav.route_query(query)
-                return {"messages": [AIMessage(content=result)]}
-            return state
+            """Use LLM to decide which tool to call, or respond directly."""
+            from litellm import completion as llm_completion
 
+            system_prompt = (
+                "You are the Brownfield Cartographer Navigator agent. "
+                "You have 4 tools to query a codebase knowledge graph: "
+                "find_implementation, trace_lineage, blast_radius, explain_module. "
+                "Use the appropriate tool(s) to answer the user's question. "
+                "If you have enough information, respond directly."
+            )
+
+            # Convert state messages to LiteLLM format
+            llm_messages = [{"role": "system", "content": system_prompt}]
+            for msg in state["messages"]:
+                if isinstance(msg, HumanMessage):
+                    llm_messages.append({"role": "user", "content": msg.content})
+                elif isinstance(msg, AIMessage):
+                    ai_msg = {"role": "assistant", "content": msg.content or ""}
+                    if hasattr(msg, "tool_calls") and msg.tool_calls:
+                        ai_msg["tool_calls"] = [
+                            {
+                                "id": tc["id"],
+                                "type": "function",
+                                "function": {"name": tc["name"], "arguments": json.dumps(tc["args"])},
+                            }
+                            for tc in msg.tool_calls
+                        ]
+                    llm_messages.append(ai_msg)
+                elif isinstance(msg, ToolMessage):
+                    llm_messages.append({
+                        "role": "tool",
+                        "content": msg.content,
+                        "tool_call_id": msg.tool_call_id,
+                    })
+
+            # Build tool schemas for the LLM
+            tool_schemas = []
+            for t in all_tools:
+                schema = {
+                    "type": "function",
+                    "function": {
+                        "name": t.name,
+                        "description": t.description,
+                        "parameters": t.args_schema.model_json_schema() if hasattr(t, "args_schema") else {},
+                    },
+                }
+                tool_schemas.append(schema)
+
+            try:
+                model = os.environ.get("CARTOGRAPHER_SYNTH_MODEL", "openrouter/openai/gpt-4o")
+                fallback = os.environ.get("CARTOGRAPHER_FALLBACK_SYNTH", "openrouter/anthropic/claude-3.5-sonnet")
+                response = llm_completion(
+                    model=model,
+                    messages=llm_messages,
+                    tools=tool_schemas,
+                    num_retries=2,
+                    fallbacks=[fallback],
+                )
+
+                resp_msg = response.choices[0].message
+
+                # Check if the LLM wants to call tools
+                if hasattr(resp_msg, "tool_calls") and resp_msg.tool_calls:
+                    tool_calls = [
+                        {
+                            "id": tc.id,
+                            "name": tc.function.name,
+                            "args": json.loads(tc.function.arguments),
+                        }
+                        for tc in resp_msg.tool_calls
+                    ]
+                    ai_message = AIMessage(
+                        content=resp_msg.content or "",
+                        tool_calls=tool_calls,
+                    )
+                    return {"messages": [ai_message]}
+                else:
+                    return {"messages": [AIMessage(content=resp_msg.content or "")]}
+
+            except Exception as e:
+                logger.warning(f"LangGraph agent LLM call failed: {e}. Falling back to REPL routing.")
+                # Fallback: use deterministic routing
+                last_human = next(
+                    (m for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), None
+                )
+                if last_human:
+                    nav = NavigatorAgent(graph, hydro, repo_path)
+                    result = nav.route_query(last_human.content)
+                    return {"messages": [AIMessage(content=result)]}
+                return state
+
+        # --- Tool Node: Execute the tool the LLM selected ---
+        def tool_node(state: NavigatorState) -> NavigatorState:
+            """Execute tool calls from the last AI message."""
+            last_msg = state["messages"][-1]
+            if not isinstance(last_msg, AIMessage) or not hasattr(last_msg, "tool_calls") or not last_msg.tool_calls:
+                return state
+
+            tool_results = []
+            for tc in last_msg.tool_calls:
+                tool_fn = tool_map.get(tc["name"])
+                if tool_fn:
+                    try:
+                        result = tool_fn.invoke(tc["args"])
+                    except Exception as e:
+                        result = f"Error executing {tc['name']}: {e}"
+                else:
+                    result = f"Unknown tool: {tc['name']}"
+
+                tool_results.append(ToolMessage(
+                    content=str(result),
+                    tool_call_id=tc["id"],
+                ))
+
+            return {"messages": tool_results}
+
+        # --- Conditional edge: should we continue or stop? ---
+        def should_continue(state: NavigatorState) -> str:
+            """Decide whether to route to tool_node or END."""
+            last_msg = state["messages"][-1]
+            if isinstance(last_msg, AIMessage) and hasattr(last_msg, "tool_calls") and last_msg.tool_calls:
+                return "tool_node"
+            return "end"
+
+        # --- Build the graph ---
         builder = StateGraph(NavigatorState)
         builder.add_node("agent", agent_node)
+        builder.add_node("tool_node", tool_node)
+
         builder.add_edge(START, "agent")
-        builder.add_edge("agent", END)
+        builder.add_conditional_edges("agent", should_continue, {
+            "tool_node": "tool_node",
+            "end": END,
+        })
+        builder.add_edge("tool_node", "agent")  # Loop back for multi-turn reasoning
 
         return builder.compile()
 
