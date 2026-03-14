@@ -69,6 +69,24 @@ cartographer analyze --repo-path /path/to/target/codebase
 
 # Analyze a remote GitHub repository (auto-clones, depth=1)
 cartographer analyze --repo-path https://github.com/dbt-labs/jaffle_shop
+
+# Query the generated intelligence graph
+cartographer query --query "What is the primary data ingestion path?"
+
+# Launch the interactive web UI
+cartographer ui
+```
+
+### Quick Start
+```bash
+# 1. Analyze 
+cartographer analyze --repo-path https://github.com/dbt-labs/jaffle_shop
+
+# 2. Ask questions via interactive REPL / LangGraph 
+cartographer query
+
+# 3. Or launch the Streamlit Web UI
+cartographer ui
 ```
 
 ### Options
