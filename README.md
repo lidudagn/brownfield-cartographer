@@ -64,11 +64,15 @@ uv pip install -e .[dev]
 The Cartographer exposes a CLI tool via `click`.
 
 ```bash
+# Analyze a local repository
 cartographer analyze --repo-path /path/to/target/codebase
+
+# Analyze a remote GitHub repository (auto-clones, depth=1)
+cartographer analyze --repo-path https://github.com/dbt-labs/jaffle_shop
 ```
 
 ### Options
-- `--repo-path` (Required): The absolute or relative path to the repo to analyze.
+- `--repo-path` (Required): Local path OR remote Git URL (`https://github.com/org/repo`) to analyze. GitHub, GitLab, and Bitbucket URLs are auto-detected and shallow-cloned.
 - `--output-dir`: Where to save reports (default: `.cartography`).
 - `--dialect`: SQL dialect for parsing. Supports `auto`, `postgres`, `snowflake`, `bigquery`, `duckdb` (default: `auto`).
 - `--workers`: Number of parallel structural threads to run (default: `4`).
@@ -103,5 +107,4 @@ Analysis generates the following files in the target `--output-dir` (default: `.
    Audit log of every analysis action with timestamps and metrics.
 
 ## Known Gaps
-- **Navigator Agent (Phase 4):** Interactive query interface with `find_implementation`, `trace_lineage`, `blast_radius`, and `explain_module` tools not yet built.
 - **Remote Data Warehouses:** Does not reach into Snowflake/BigQuery schemas to detect actual drift — schema snapshots only cover what is statically documented in YAMLs vs `sqlglot` output.
