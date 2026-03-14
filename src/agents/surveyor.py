@@ -21,7 +21,6 @@ from src.analyzers.dag_config_parser import detect_entry_points
 from src.analyzers.tree_sitter_analyzer import TreeSitterAnalyzer
 from src.models.schemas import (
     AnalysisCheckpoint,
-    CircularDependency,
     CodebaseGraph,
     DatasetNode,
     DbtProjectConfig,
@@ -98,59 +97,7 @@ def apply_80_20_velocity(modules: List[ModuleNode]) -> None:
 
 
 # =============================================================================
-# Circular Dependency Detection (MF-4, C-4)
-# =============================================================================
 
-
-def suggest_cycle_resolution(
-    cycle: List[str], graph: nx.DiGraph
-) -> str:
-    """Analyze cycle and suggest breaking at the weakest edge (lowest PageRank target)."""
-    if len(cycle) < 2:
-        return "Trivial self-loop; remove self-import."
-
-    # Find the edge whose target has the lowest PageRank
-    # Breaking the dep on the least-important node disrupts the least
-    weakest_target = cycle[0]
-    weakest_score = float("inf")
-    weakest_source = cycle[-1]
-
-    for i in range(len(cycle)):
-        src = cycle[i]
-        tgt = cycle[(i + 1) % len(cycle)]
-        pr = graph.nodes.get(tgt, {}).get("pagerank", 0.0)
-        if pr < weakest_score:
-            weakest_score = pr
-            weakest_target = tgt
-            weakest_source = src
-
-    return (
-        f"Break the dependency from `{Path(weakest_source).name}` → `{Path(weakest_target).name}` "
-        f"(PageRank {weakest_score:.4f}). Consider extracting shared logic into a "
-        f"new module or using dependency injection to decouple the cycle: "
-        f"{' → '.join(Path(p).name for p in cycle)}."
-    )
-
-
-def detect_circular_dependencies(graph: nx.DiGraph) -> List[CircularDependency]:
-    """Find cycles in the directed graph."""
-    cycles = []
-    try:
-        # Simple cycle finding for DiGraph
-        for cycle in nx.simple_cycles(graph):
-            if len(cycle) > 1:  # ignore self-loops
-                cycles.append(
-                    CircularDependency(
-                        cycle_path=cycle.copy(),
-                        ref_sites=[],  # Without deep AST traversal again, ref sites are empty
-                        suggestion=suggest_cycle_resolution(cycle, graph),
-                    )
-                )
-    except nx.NetworkXNoCycle:
-        pass
-    except nx.NetworkXNotImplemented:
-        pass
-    return cycles
 
 
 # =============================================================================
@@ -226,8 +173,23 @@ def detect_dead_code(modules: List[ModuleNode], graph: nx.DiGraph) -> List[DeadC
             continue
         
         # dbt aware overrides
-        if mod.language == "yaml" and ("models/" in path or path.endswith("__sources.yml") or "dbt_project.yml" in path or "packages.yml" in path):
+        if mod.language == "yaml" and ("models/" in path or path.endswith("__sources.yml") or path.endswith("_sources.yml") or "dbt_project.yml" in path or "packages.yml" in path):
             continue
+
+        # dbt SQL models consumed via ref() are NOT dead code even with in_degree=0
+        # in the Python import graph — they are consumed via Jinja ref() calls
+        if mod.language == "jinja_sql" and "macros/" not in path.replace("\\", "/"):
+            stem = Path(path).stem
+            is_ref_target = any(
+                stem in other.imports
+                for other in modules
+                if other.path != path and other.language == "jinja_sql"
+            )
+            if is_ref_target:
+                continue
+            # SQL model files under models/ that produce datasets are terminal outputs, not dead code
+            if "models/" in path.replace("\\", "/"):
+                continue
             
         if "macro" in path or path.startswith("macros/"):
             macro_name = Path(path).stem
