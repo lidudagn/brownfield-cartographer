@@ -1,8 +1,3 @@
-{"action": "file_discovery", "files_found": 1128, "timestamp": "2026-03-14T11:03:33.352256"}
-{"action": "ast_parsing", "modules_parsed": 1128, "parse_errors": 13, "timestamp": "2026-03-14T11:03:33.352697"}
-{"action": "sql_lineage", "sql_files_analyzed": 610, "column_lineages_extracted": 5470, "unresolved_refs": 5, "timestamp": "2026-03-14T11:03:33.352702"}
-{"action": "entry_point_detection", "entry_points": 50, "timestamp": "2026-03-14T11:03:33.352907"}
-{"action": "git_velocity", "high_velocity_files": 225, "timestamp": "2026-03-14T11:03:33.353183"}
-{"action": "graph_analysis", "nodes": 1128, "edges": 897, "circular_deps": 0, "dead_code_candidates": 636, "timestamp": "2026-03-14T11:03:33.353469"}
-{"action": "hydrologist", "lineage_nodes": 1518, "lineage_edges": 1977, "sources": 344, "sinks": 214, "timestamp": "2026-03-14T11:03:33.353474"}
-{"action": "serialization", "output_dir": ".cartography", "duration_seconds": 2113.42, "timestamp": "2026-03-14T11:03:33.353485"}
+{"action": "incremental_update", "changed_files": 1, "previous_sha": "7be2c583", "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-14T12:26:26.154919"}
+{"action": "generate_codebase_md", "detail": "CODEBASE.md generated", "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-14T12:26:26.155891"}
+{"action": "generate_onboarding_brief", "detail": "Onboarding brief generated", "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-14T12:26:26.157104"}
