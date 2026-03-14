@@ -1,0 +1,256 @@
+{
+  "transformations": [
+    {
+      "node_id": "transformation:0003_simple_retro_girl",
+      "name": "0003_simple_retro_girl",
+      "node_type": "transformation",
+      "source_datasets": [],
+      "target_datasets": [
+        "dataset:0003_simple_retro_girl"
+      ],
+      "transformation_type": "select",
+      "source_file": "packages/evals/src/db/migrations/0003_simple_retro_girl.sql",
+      "line_range": [
+        1,
+        1
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": []
+    },
+    {
+      "node_id": "transformation:0001_lowly_captain_flint",
+      "name": "0001_lowly_captain_flint",
+      "node_type": "transformation",
+      "source_datasets": [],
+      "target_datasets": [
+        "dataset:0001_lowly_captain_flint"
+      ],
+      "transformation_type": "select",
+      "source_file": "packages/evals/src/db/migrations/0001_lowly_captain_flint.sql",
+      "line_range": [
+        1,
+        1
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": []
+    },
+    {
+      "node_id": "transformation:0001_add_timeout_to_runs",
+      "name": "0001_add_timeout_to_runs",
+      "node_type": "transformation",
+      "source_datasets": [],
+      "target_datasets": [
+        "dataset:0001_add_timeout_to_runs"
+      ],
+      "transformation_type": "select",
+      "source_file": "packages/evals/src/db/migrations/0001_add_timeout_to_runs.sql",
+      "line_range": [
+        1,
+        1
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": []
+    },
+    {
+      "node_id": "transformation:0002_bouncy_blazing_skull",
+      "name": "0002_bouncy_blazing_skull",
+      "node_type": "transformation",
+      "source_datasets": [],
+      "target_datasets": [
+        "dataset:0002_bouncy_blazing_skull"
+      ],
+      "transformation_type": "select",
+      "source_file": "packages/evals/src/db/migrations/0002_bouncy_blazing_skull.sql",
+      "line_range": [
+        1,
+        6
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": []
+    },
+    {
+      "node_id": "transformation:0004_sloppy_black_knight",
+      "name": "0004_sloppy_black_knight",
+      "node_type": "transformation",
+      "source_datasets": [],
+      "target_datasets": [
+        "dataset:0004_sloppy_black_knight"
+      ],
+      "transformation_type": "select",
+      "source_file": "packages/evals/src/db/migrations/0004_sloppy_black_knight.sql",
+      "line_range": [
+        1,
+        3
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": []
+    },
+    {
+      "node_id": "transformation:0000_young_trauma",
+      "name": "0000_young_trauma",
+      "node_type": "transformation",
+      "source_datasets": [],
+      "target_datasets": [
+        "dataset:0000_young_trauma"
+      ],
+      "transformation_type": "select",
+      "source_file": "packages/evals/src/db/migrations/0000_young_trauma.sql",
+      "line_range": [
+        1,
+        54
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": []
+    },
+    {
+      "node_id": "transformation:0006_worried_spectrum",
+      "name": "0006_worried_spectrum",
+      "node_type": "transformation",
+      "source_datasets": [],
+      "target_datasets": [
+        "dataset:0006_worried_spectrum"
+      ],
+      "transformation_type": "select",
+      "source_file": "packages/evals/src/db/migrations/0006_worried_spectrum.sql",
+      "line_range": [
+        1,
+        1
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": []
+    },
+    {
+      "node_id": "transformation:0005_strong_skrulls",
+      "name": "0005_strong_skrulls",
+      "node_type": "transformation",
+      "source_datasets": [],
+      "target_datasets": [
+        "dataset:0005_strong_skrulls"
+      ],
+      "transformation_type": "select",
+      "source_file": "packages/evals/src/db/migrations/0005_strong_skrulls.sql",
+      "line_range": [
+        1,
+        12
+      ],
+      "sql_query_if_applicable": null,
+      "column_lineage": []
+    }
+  ],
+  "datasets": [],
+  "produces_edges": [
+    {
+      "source": "transformation:0003_simple_retro_girl",
+      "target": "dataset:0003_simple_retro_girl",
+      "evidence": {
+        "file_path": "packages/evals/src/db/migrations/0003_simple_retro_girl.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "ALTER TABLE \"runs\" ADD COLUMN \"jobToken\" text;",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:0001_lowly_captain_flint",
+      "target": "dataset:0001_lowly_captain_flint",
+      "evidence": {
+        "file_path": "packages/evals/src/db/migrations/0001_lowly_captain_flint.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "ALTER TABLE \"runs\" ADD COLUMN \"timeout\" integer DEFAULT 5 NOT NULL;",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:0001_add_timeout_to_runs",
+      "target": "dataset:0001_add_timeout_to_runs",
+      "evidence": {
+        "file_path": "packages/evals/src/db/migrations/0001_add_timeout_to_runs.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "ALTER TABLE \"runs\" ADD COLUMN \"timeout\" integer DEFAULT 5 NOT NULL;",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:0002_bouncy_blazing_skull",
+      "target": "dataset:0002_bouncy_blazing_skull",
+      "evidence": {
+        "file_path": "packages/evals/src/db/migrations/0002_bouncy_blazing_skull.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "ALTER TABLE \"runs\" ADD COLUMN \"name\" text;--> statement-breakpoint",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:0004_sloppy_black_knight",
+      "target": "dataset:0004_sloppy_black_knight",
+      "evidence": {
+        "file_path": "packages/evals/src/db/migrations/0004_sloppy_black_knight.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "DROP INDEX \"tasks_language_exercise_idx\";--> statement-breakpoint",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:0000_young_trauma",
+      "target": "dataset:0000_young_trauma",
+      "evidence": {
+        "file_path": "packages/evals/src/db/migrations/0000_young_trauma.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "CREATE TABLE \"runs\" (",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:0006_worried_spectrum",
+      "target": "dataset:0006_worried_spectrum",
+      "evidence": {
+        "file_path": "packages/evals/src/db/migrations/0006_worried_spectrum.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "ALTER TABLE \"runs\" ADD COLUMN \"execution_method\" text DEFAULT 'vscode' NOT NULL;",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    },
+    {
+      "source": "transformation:0005_strong_skrulls",
+      "target": "dataset:0005_strong_skrulls",
+      "evidence": {
+        "file_path": "packages/evals/src/db/migrations/0005_strong_skrulls.sql",
+        "line_start": 1,
+        "line_end": 1,
+        "column_start": 0,
+        "column_end": 0,
+        "snippet": "ALTER TABLE \"tasks\" DROP CONSTRAINT \"tasks_run_id_runs_id_fk\";",
+        "analysis_method": "sqlglot"
+      },
+      "edge_type": "PRODUCES"
+    }
+  ],
+  "consumes_edges": []
+}

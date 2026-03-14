@@ -1,0 +1,10 @@
+{"action": "file_discovery", "files_found": 2624, "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:02:37.889517"}
+{"action": "ast_parsing", "modules_parsed": 2624, "parse_errors": 7, "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:02:37.890424"}
+{"action": "sql_lineage", "sql_files_analyzed": 8, "column_lineages_extracted": 0, "unresolved_refs": 0, "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:02:37.890433"}
+{"action": "entry_point_detection", "entry_points": 21, "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:02:37.891128"}
+{"action": "git_velocity", "high_velocity_files": 477, "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:02:37.893910"}
+{"action": "graph_analysis", "nodes": 2624, "edges": 1294, "circular_deps": 0, "dead_code_candidates": 2591, "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:02:37.895779"}
+{"action": "hydrologist", "lineage_nodes": 16, "lineage_edges": 8, "sources": 8, "sinks": 8, "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:02:37.895799"}
+{"action": "generate_codebase_md", "detail": "CODEBASE.md generated", "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:02:37.916998"}
+{"action": "generate_onboarding_brief", "detail": "Onboarding brief generated", "confidence": 1.0, "evidence_source": "static_analysis", "timestamp": "2026-03-15T00:02:37.953622"}
+{"action": "token_budget_summary", "bulk_input_tokens": 11236, "bulk_output_tokens": 56395, "synthesis_input_tokens": 0, "synthesis_output_tokens": 0, "estimated_cost_usd": 0.035522400000000016, "confidence": 1.0, "evidence_source": "instrumentation", "timestamp": "2026-03-15T00:02:37.953707"}
