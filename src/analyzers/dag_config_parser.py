@@ -117,6 +117,42 @@ def parse_model_yaml(yaml_path: str) -> DbtModelConfig:
         logger.error(f"Failed to parse model yaml at {yaml_path}: {e}")
         return DbtModelConfig()
 
+def parse_airflow_dag_yaml(repo_root: str) -> List[Dict]:
+    """Parse Airflow yaml config and DAG python files to extract topology.
+    Returns dependency edges for ConfiguresEdge entries."""
+    import re
+    import ast
+    edges = []
+    
+    # Simple parser to find `>>` dependencies in DAG files
+    for filepath in Path(repo_root).rglob("*.py"):
+        try:
+            content = filepath.read_text(encoding="utf-8")
+            if "DAG(" not in content and "@dag" not in content:
+                continue
+                
+            # Naive approach: look for x >> y or x.set_downstream(y)
+            # In a real system, we'd use tree-sitter or AST to extract the topology
+            # For this MVP, we parse simple `task1 >> task2` relationships
+            lines = content.splitlines()
+            for i, line in enumerate(lines):
+                if ">>" in line:
+                    parts = [p.strip() for p in line.split(">>")]
+                    for j in range(len(parts) - 1):
+                        source_task = parts[j].split("[")[-1].strip(" '\"")
+                        target_task = parts[j+1].split("[")[0].strip(" '\"")
+                        if source_task and target_task and source_task.isidentifier() and target_task.isidentifier():
+                            edges.append({
+                                "source": f"task:{source_task}",
+                                "target": f"task:{target_task}",
+                                "file": str(filepath.relative_to(repo_root)),
+                                "line": i + 1,
+                                "snippet": line.strip()
+                            })
+        except Exception as e:
+            logger.debug(f"Failed to parse DAG {filepath}: {e}")
+            
+    return edges
 
 # =============================================================================
 # Entry Point Detection (F-9, M-8)

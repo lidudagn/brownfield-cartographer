@@ -35,6 +35,11 @@ EXTENSION_MAP: Dict[str, Optional[str]] = {
     ".yml": "yaml",
     ".yaml": "yaml",
     ".csv": "csv",
+    ".ipynb": "notebook",
+    ".ts": "typescript",
+    ".tsx": "tsx",
+    ".js": "javascript",
+    ".jsx": "javascript",
     ".md": None,
     ".txt": None,
     ".toml": None,
@@ -50,6 +55,7 @@ class LanguageRouter:
 
     def __init__(self) -> None:
         self._parsers: Dict[str, Any] = {}
+        self._languages: Dict[str, Any] = {}
         self._initialized = False
 
     def _ensure_initialized(self) -> None:
@@ -59,10 +65,10 @@ class LanguageRouter:
         try:
             from tree_sitter_languages import get_language, get_parser
 
-            for lang in ("python", "sql", "yaml"):
+            for lang in ("python", "sql", "yaml", "typescript", "tsx", "javascript"):
                 try:
-                    parser = get_parser(lang)
-                    self._parsers[lang] = parser
+                    self._parsers[lang] = get_parser(lang)
+                    self._languages[lang] = get_language(lang)
                 except Exception as e:
                     logger.warning("Failed to load tree-sitter grammar for %s: %s", lang, e)
             self._initialized = True
@@ -74,6 +80,11 @@ class LanguageRouter:
         """Get tree-sitter parser for the given language."""
         self._ensure_initialized()
         return self._parsers.get(language)
+
+    def get_language(self, language: str) -> Optional[Any]:
+        """Get tree-sitter language object for the given language."""
+        self._ensure_initialized()
+        return self._languages.get(language)
 
     def classify(self, filepath: str) -> Optional[str]:
         """Classify file extension → language string."""
@@ -170,6 +181,9 @@ class TreeSitterAnalyzer:
         if language == "csv":
             return self._analyze_csv(filepath, repo_root)
 
+        if language == "notebook":
+            return self._analyze_notebook(filepath, repo_root)
+
         source = self._read_file(filepath, repo_root)
         if not source.strip():
             return ModuleNode(
@@ -186,6 +200,8 @@ class TreeSitterAnalyzer:
                 return self._analyze_sql(filepath, source, repo_root)
             elif language == "yaml":
                 return self._analyze_yaml(filepath, source, repo_root)
+            elif language in ("typescript", "tsx", "javascript"):
+                return self._analyze_ts_js(filepath, source, repo_root, language)
             else:
                 return ModuleNode(
                     path=filepath,
@@ -226,6 +242,81 @@ class TreeSitterAnalyzer:
             is_entry_point=True,
             entry_point_type="seed",
         )
+
+    def _analyze_notebook(self, filepath: str, repo_root: str) -> ModuleNode:
+        """Analyze Jupyter notebook by extracting code cells and parsing as Python."""
+        import json as _json
+        raw = self._read_file(filepath, repo_root)
+        if not raw.strip():
+            return ModuleNode(
+                path=filepath,
+                language="notebook",
+                lines_of_code=0,
+                is_complete_parse=True,
+            )
+
+        try:
+            nb = _json.loads(raw)
+        except _json.JSONDecodeError:
+            return ModuleNode(
+                path=filepath,
+                language="notebook",
+                lines_of_code=0,
+                is_complete_parse=False,
+                parse_errors=[
+                    AnalysisError(
+                        error_type="parse_error",
+                        file_path=filepath,
+                        message="Invalid notebook JSON",
+                        recoverable=True,
+                        fallback_used="minimal_placeholder",
+                    )
+                ],
+            )
+
+        # Extract code cells
+        code_lines: List[str] = []
+        cells = nb.get("cells", [])
+        for cell in cells:
+            if cell.get("cell_type") == "code":
+                source = cell.get("source", [])
+                if isinstance(source, list):
+                    code_lines.extend(source)
+                elif isinstance(source, str):
+                    code_lines.extend(source.splitlines(keepends=True))
+            code_lines.append("\n")  # separator between cells
+
+        combined_source = "".join(code_lines)
+        if not combined_source.strip():
+            return ModuleNode(
+                path=filepath,
+                language="notebook",
+                lines_of_code=len(raw.splitlines()),
+                is_complete_parse=True,
+            )
+
+        # Delegate to Python analyzer
+        try:
+            node = self._analyze_python(filepath, combined_source, repo_root)
+            node.language = "notebook"  # Override language back to notebook
+            return node
+        except Exception as e:
+            logger.warning("Notebook python analysis failed for %s: %s", filepath, e)
+            return ModuleNode(
+                path=filepath,
+                language="notebook",
+                lines_of_code=len(raw.splitlines()),
+                is_complete_parse=False,
+                parse_errors=[
+                    AnalysisError(
+                        error_type="partial_parse",
+                        file_path=filepath,
+                        message=str(e),
+                        recoverable=True,
+                        fallback_used="partial_results",
+                    )
+                ],
+            )
 
     # -------------------------------------------------------------------------
     # Python Analysis (M-2, M-3, M-6, F-1, C-1, C-2)
@@ -821,3 +912,96 @@ class TreeSitterAnalyzer:
             if not cursor.goto_parent():
                 break
             visited = True
+
+    # -------------------------------------------------------------------------
+    # TypeScript / JavaScript Analysis
+    # -------------------------------------------------------------------------
+
+    def _analyze_ts_js(self, filepath: str, source: str, repo_root: str, language: str) -> ModuleNode:
+        """Analyze TypeScript/JavaScript via manual AST walk."""
+        parser = self.router.get_parser(language)
+        if not parser:
+            return ModuleNode(path=filepath, language=language, lines_of_code=len(source.splitlines()), is_complete_parse=True)
+
+        tree = parser.parse(source.encode("utf-8"))
+        root = tree.root_node
+
+        mod = ModuleNode(
+            path=filepath,
+            language=language,
+            lines_of_code=len(source.splitlines()),
+            is_complete_parse=not root.has_error,
+        )
+
+        imports = []
+        classes = []
+        public_funcs = []
+        complexity = 1  # Base complexity
+
+        def walk(node):
+            nonlocal complexity
+            
+            # Extract Imports
+            if node.type == "import_statement":
+                # Find the string child which is the path
+                for child in node.children:
+                    if child.type == "string":
+                        val = source[child.start_byte:child.end_byte].strip("'\"")
+                        imports.append(val)
+            
+            # Require calls
+            if node.type == "call_expression":
+                func_node = node.child_by_field_name("function")
+                if func_node and source[func_node.start_byte:func_node.end_byte] == "require":
+                    args = node.child_by_field_name("arguments")
+                    if args and args.children:
+                        for arg in args.children:
+                            if arg.type == "string":
+                                val = source[arg.start_byte:arg.end_byte].strip("'\"")
+                                imports.append(val)
+
+            # Classes
+            if node.type in ("class_declaration", "class"):
+                name_node = node.child_by_field_name("name")
+                if name_node:
+                    classes.append(source[name_node.start_byte:name_node.end_byte])
+
+            # Functions and Methods
+            if node.type in ("function_declaration", "method_definition"):
+                name_node = node.child_by_field_name("name")
+                if name_node:
+                    public_funcs.append(source[name_node.start_byte:name_node.end_byte])
+                complexity += 1
+            
+            # Arrow functions in variable declarations
+            if node.type == "variable_declarator":
+                val_node = node.child_by_field_name("value")
+                if val_node and val_node.type in ("arrow_function", "function_expression"):
+                    name_node = node.child_by_field_name("name")
+                    if name_node:
+                        public_funcs.append(source[name_node.start_byte:name_node.end_byte])
+                    complexity += 1
+
+            # Decision points for complexity
+            if node.type in ("if_statement", "for_statement", "while_statement", "do_statement", "switch_case", "ternary_expression"):
+                complexity += 1
+            
+            if node.type == "binary_expression":
+                op_node = node.child_by_field_name("operator")
+                if op_node and source[op_node.start_byte:op_node.end_byte] in ("&&", "||", "??"):
+                    complexity += 1
+
+            for child in node.children:
+                walk(child)
+
+        walk(root)
+
+        mod.imports = list(dict.fromkeys(imports))
+        mod.classes = list(dict.fromkeys(classes))
+        mod.public_functions = list(dict.fromkeys(public_funcs))
+        mod.complexity_score = complexity
+        
+        if mod.public_functions:
+            mod.is_entry_point = any(x in ["activate", "main", "start", "run", "bootstrap"] for x in mod.public_functions)
+        
+        return mod
