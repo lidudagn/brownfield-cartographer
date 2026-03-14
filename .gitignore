@@ -10,3 +10,4 @@ cartography_out/
 .env
 .cartography_jaffle/
 .cartography_jaffle_v2/
+.cartography_test*/
