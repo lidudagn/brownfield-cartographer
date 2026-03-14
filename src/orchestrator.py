@@ -34,7 +34,6 @@ from src.agents.surveyor import (
     apply_80_20_velocity,
     build_module_graph,
     calculate_dead_code_confidence,
-    detect_circular_dependencies,
     detect_dead_code,
     extract_git_velocity,
     run_pagerank,
@@ -104,13 +103,13 @@ def run_analysis(
     checkpoint_file = out / "checkpoint.json"
 
     # Step 1: File Discovery
-    patterns = ["**/*.py", "**/*.sql", "**/*.yml", "**/*.yaml", "**/*.csv"]
+    patterns = ["**/*.py", "**/*.sql", "**/*.yml", "**/*.yaml", "**/*.csv", "**/*.ipynb", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
     files = []
     for pattern in patterns:
         files.extend(glob.glob(str(repo / pattern), recursive=True))
         
     # Ignore dbt specific directories that aren't source code
-    exclude_dirs = ["target/", "dbt_packages/", "logs/", "venv/", ".env/"]
+    exclude_dirs = ["target/", "dbt_packages/", "logs/", "venv/", ".env/", "node_modules/", "__pycache__/", ".git/", "site-packages/"]
     files = [
         f for f in files 
         if not any(ex in f for ex in exclude_dirs)
@@ -209,7 +208,7 @@ def run_analysis(
         dbt_config = parse_dbt_project(str(dbt_project_path))
         
     datasets = []
-    for src_yml in repo.glob("**/__sources.yml"):
+    for src_yml in list(repo.glob("**/__sources.yml")) + list(repo.glob("**/_sources.yml")):
         new_datasets = parse_sources(str(src_yml))
         for d in new_datasets:
             d.source_file = str(Path(d.source_file).relative_to(repo.absolute())) if Path(d.source_file).is_absolute() else d.source_file
@@ -269,7 +268,8 @@ def run_analysis(
     
     # Step 8: PageRank & Circular Dependencies (MF-4)
     run_pagerank(G)
-    cycles = detect_circular_dependencies(G)
+    hydro = Hydrologist()
+    cycles = hydro.detect_circular_dependencies(G)
     if cycles:
         logger.warning(f"Detected {len(cycles)} circular dependencies!")
         
@@ -401,7 +401,6 @@ def run_analysis(
     )
     
     # Step 11: Wire Hydrologist — build lineage graph and run analytics
-    hydro = Hydrologist()
     hydro.build_lineage_graph(cg)
     lineage_stats = hydro.get_statistics()
     sources = hydro.find_sources()
@@ -439,10 +438,10 @@ def run_analysis(
     
     # Get semanticist budget if available
     semanticist_budget = None
-    if _HAS_SEMANTICIST and 'semanticist' in dir():
+    if _HAS_SEMANTICIST:
         try:
-            semanticist_budget = semanticist.budget
-        except Exception:
+            semanticist_budget = semanticist.budget  # type: ignore[possibly-undefined]
+        except (NameError, Exception):
             pass
     
     archivist.run(
@@ -458,6 +457,9 @@ def run_analysis(
     png_path = out / "module_graph.png"
     wrapper.save_artifacts(out)
     wrapper.visualize(png_path)
+    
+    # Generate semantic index (vector store of purpose statements)
+    archivist.generate_semantic_index(cg, str(out))
     
     # Save the strictly lineage-based interactive graph
     visualize_interactive_lineage(hydro.graph, out / "lineage_graph.html")

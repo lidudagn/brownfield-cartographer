@@ -72,6 +72,7 @@ _EXPECTED_ARTIFACTS = [
     ("onboarding_brief.md", "FDE Day-One Brief (5 questions answered)"),
     ("cartography_trace.jsonl", "Audit trail of every analysis action"),
     ("module_graph.png", "Visual graph (PageRank × Git Velocity)"),
+    ("semantic_index/", "Vector store of module purpose embeddings"),
 ]
 
 
