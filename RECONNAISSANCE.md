@@ -1,4 +1,4 @@
-# RECONNAISSANCE.md: Phase 0 Manual Audit Log (v2)
+# Phase 0 Manual Audit Log (v2)
 
 **Engineer:** FDE-01 (Antigravity)
 **Target:** `dbt-labs/jaffle-shop`
