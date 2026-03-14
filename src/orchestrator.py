@@ -557,10 +557,10 @@ def run_incremental(
         
         # Rebuild edges (imports)
         import networkx as nx
-        G = build_module_graph(cg.modules)
-        pr = run_pagerank(G)
-        for mod in cg.modules:
-            mod.pagerank = pr.get(mod.path, 0.0)
+        G, imports_edges, calls_edges = build_module_graph(cg.modules, repo_path=repo_path)
+        cg.imports_edges = imports_edges
+        cg.calls_edges = calls_edges
+        run_pagerank(G)
         
         # Rebuild lineage
         hydro = Hydrologist()
