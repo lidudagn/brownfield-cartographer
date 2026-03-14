@@ -63,6 +63,7 @@ def _clone_repo(url: str, target_dir: str, depth: int = 1) -> str:
 _EXPECTED_ARTIFACTS = [
     ("module_graph.json", "Full codebase knowledge graph (all nodes + edges)"),
     ("lineage_graph.json", "Data lineage DAG (transformations + datasets)"),
+    ("CODEBASE.md", "Living context file for AI agent injection"),
     ("modules.json", "Module & function inventory"),
     ("datasets.json", "Discovered data sources and sinks"),
     ("transformations.json", "SQL/Python transformation nodes"),
@@ -192,6 +193,56 @@ def analyze(
         if tmp_clone_dir and os.path.exists(tmp_clone_dir):
             logger.info(f"Cleaning up temporary clone at {tmp_clone_dir}")
             shutil.rmtree(tmp_clone_dir, ignore_errors=True)
+
+
+@main.command()
+@click.option(
+    "--output-dir",
+    default=".cartography",
+    help="Directory containing analysis artifacts",
+)
+@click.option(
+    "--verbose",
+    is_flag=True,
+    help="Enable debug logging",
+)
+def query(
+    output_dir: str,
+    verbose: bool,
+) -> None:
+    """Interactive Navigator agent for querying the codebase knowledge graph."""
+    if verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+    out = Path(output_dir).absolute()
+    graph_path = out / "module_graph.json"
+
+    if not graph_path.exists():
+        click.echo(
+            f"Error: No analysis found at {out}. Run 'cartographer analyze' first.",
+            err=True,
+        )
+        raise SystemExit(1)
+
+    # Load the knowledge graph
+    logger.info(f"Loading knowledge graph from {graph_path}")
+    try:
+        from src.graph.knowledge_graph import KnowledgeGraphWrapped
+        wrapper = KnowledgeGraphWrapped.load(graph_path)
+        codebase_graph = wrapper.codebase
+    except Exception as e:
+        click.echo(f"Error loading knowledge graph: {e}", err=True)
+        raise SystemExit(1)
+
+    # Build lineage graph
+    from src.agents.hydrologist import Hydrologist
+    hydro = Hydrologist()
+    hydro.build_lineage_graph(codebase_graph)
+
+    # Launch Navigator REPL
+    from src.agents.navigator import NavigatorAgent
+    nav = NavigatorAgent(codebase_graph, hydro, codebase_graph.repo_path)
+    nav.run_repl()
 
 
 if __name__ == "__main__":
