@@ -1,0 +1,127 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 1000px;
+                 background-color: #222222;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"font": {"color": "white"}, "group": "sources", "id": "seeds/jaffle-data/raw_orders.csv", "label": "raw_orders", "shape": "dot", "size": 16.819175539445958, "title": "Module: seeds/jaffle-data/raw_orders.csv\nPageRank: 0.0227\nVelocity: 0.00\nGroup: sources"}, {"font": {"color": "white"}, "group": "marts", "id": "models/marts/customers.sql", "label": "customers", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/marts/customers.sql\nPageRank: 0.0227\nVelocity: 0.00\nGroup: marts"}, {"font": {"color": "white"}, "group": "staging", "id": "models/staging/stg_order_items.sql", "label": "stg_order_items", "shape": "dot", "size": 17.439828087870687, "title": "Module: models/staging/stg_order_items.sql\nPageRank: 0.0305\nVelocity: 0.00\nGroup: staging"}, {"font": {"color": "white"}, "group": "staging", "id": "models/staging/stg_locations.yml", "label": "stg_locations", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/staging/stg_locations.yml\nPageRank: 0.0227\nVelocity: 0.00\nGroup: staging"}, {"font": {"color": "white"}, "group": "sources", "id": "models/staging/__sources.yml", "label": "__sources", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/staging/__sources.yml\nPageRank: 0.0227\nVelocity: 0.00\nGroup: sources"}, {"font": {"color": "white"}, "group": "staging", "id": "models/staging/stg_supplies.yml", "label": "stg_supplies", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/staging/stg_supplies.yml\nPageRank: 0.0227\nVelocity: 0.00\nGroup: staging"}, {"font": {"color": "white"}, "group": "staging", "id": "models/staging/stg_supplies.sql", "label": "stg_supplies", "shape": "dot", "size": 18.98612599073037, "title": "Module: models/staging/stg_supplies.sql\nPageRank: 0.0498\nVelocity: 0.00\nGroup: staging"}, {"font": {"color": "white"}, "group": "marts", "id": "models/marts/products.sql", "label": "products", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/marts/products.sql\nPageRank: 0.0227\nVelocity: 0.00\nGroup: marts"}, {"font": {"color": "white"}, "group": "staging", "id": "models/staging/stg_products.yml", "label": "stg_products", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/staging/stg_products.yml\nPageRank: 0.0227\nVelocity: 0.00\nGroup: staging"}, {"font": {"color": "white"}, "group": "marts", "id": "models/marts/locations.sql", "label": "locations", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/marts/locations.sql\nPageRank: 0.0227\nVelocity: 0.00\nGroup: marts"}, {"font": {"color": "white"}, "group": "marts", "id": "models/marts/order_items.sql", "label": "order_items", "shape": "dot", "size": 17.920939387403937, "title": "Module: models/marts/order_items.sql\nPageRank: 0.0365\nVelocity: 0.00\nGroup: marts"}, {"font": {"color": "white"}, "group": "other", "id": "packages.yml", "label": "packages", "shape": "dot", "size": 16.819175539445958, "title": "Module: packages.yml\nPageRank: 0.0227\nVelocity: 0.00\nGroup: other"}, {"font": {"color": "white"}, "group": "sources", "id": "seeds/jaffle-data/raw_supplies.csv", "label": "raw_supplies", "shape": "dot", "size": 16.819175539445958, "title": "Module: seeds/jaffle-data/raw_supplies.csv\nPageRank: 0.0227\nVelocity: 0.00\nGroup: sources"}, {"font": {"color": "white"}, "group": "marts", "id": "models/marts/metricflow_time_spine.sql", "label": "metricflow_time_spine", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/marts/metricflow_time_spine.sql\nPageRank: 0.0227\nVelocity: 0.00\nGroup: marts"}, {"font": {"color": "white"}, "group": "staging", "id": "models/staging/stg_orders.yml", "label": "stg_orders", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/staging/stg_orders.yml\nPageRank: 0.0227\nVelocity: 0.00\nGroup: staging"}, {"font": {"color": "white"}, "group": "marts", "id": "models/marts/orders.sql", "label": "orders", "shape": "dot", "size": 17.592324490875797, "title": "Module: models/marts/orders.sql\nPageRank: 0.0324\nVelocity: 0.00\nGroup: marts"}, {"font": {"color": "white"}, "group": "sources", "id": "seeds/jaffle-data/raw_customers.csv", "label": "raw_customers", "shape": "dot", "size": 16.819175539445958, "title": "Module: seeds/jaffle-data/raw_customers.csv\nPageRank: 0.0227\nVelocity: 0.00\nGroup: sources"}, {"font": {"color": "white"}, "group": "marts", "id": "models/marts/supplies.sql", "label": "supplies", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/marts/supplies.sql\nPageRank: 0.0227\nVelocity: 0.00\nGroup: marts"}, {"font": {"color": "white"}, "group": "marts", "id": "models/marts/order_items.yml", "label": "order_items", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/marts/order_items.yml\nPageRank: 0.0227\nVelocity: 0.00\nGroup: marts"}, {"font": {"color": "white"}, "group": "sources", "id": "seeds/jaffle-data/raw_stores.csv", "label": "raw_stores", "shape": "dot", "size": 16.819175539445958, "title": "Module: seeds/jaffle-data/raw_stores.csv\nPageRank: 0.0227\nVelocity: 0.00\nGroup: sources"}, {"font": {"color": "white"}, "group": "sources", "id": "seeds/jaffle-data/raw_products.csv", "label": "raw_products", "shape": "dot", "size": 16.819175539445958, "title": "Module: seeds/jaffle-data/raw_products.csv\nPageRank: 0.0227\nVelocity: 0.00\nGroup: sources"}, {"font": {"color": "white"}, "group": "marts", "id": "models/marts/products.yml", "label": "products", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/marts/products.yml\nPageRank: 0.0227\nVelocity: 0.00\nGroup: marts"}, {"font": {"color": "white"}, "group": "staging", "id": "models/staging/stg_order_items.yml", "label": "stg_order_items", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/staging/stg_order_items.yml\nPageRank: 0.0227\nVelocity: 0.00\nGroup: staging"}, {"font": {"color": "white"}, "group": "staging", "id": "models/staging/stg_customers.yml", "label": "stg_customers", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/staging/stg_customers.yml\nPageRank: 0.0227\nVelocity: 0.00\nGroup: staging"}, {"font": {"color": "white"}, "group": "staging", "id": "models/staging/stg_customers.sql", "label": "stg_customers", "shape": "dot", "size": 17.592324490875797, "title": "Module: models/staging/stg_customers.sql\nPageRank: 0.0324\nVelocity: 0.00\nGroup: staging"}, {"font": {"color": "white"}, "group": "marts", "id": "models/marts/orders.yml", "label": "orders", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/marts/orders.yml\nPageRank: 0.0227\nVelocity: 0.00\nGroup: marts"}, {"font": {"color": "white"}, "group": "macros", "id": "macros/cents_to_dollars.sql", "label": "cents_to_dollars", "shape": "dot", "size": 16.819175539445958, "title": "Module: macros/cents_to_dollars.sql\nPageRank: 0.0227\nVelocity: 0.00\nGroup: macros"}, {"font": {"color": "white"}, "group": "staging", "id": "models/staging/stg_orders.sql", "label": "stg_orders", "shape": "dot", "size": 18.54159193582867, "title": "Module: models/staging/stg_orders.sql\nPageRank: 0.0443\nVelocity: 0.00\nGroup: staging"}, {"font": {"color": "white"}, "group": "marts", "id": "models/marts/customers.yml", "label": "customers", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/marts/customers.yml\nPageRank: 0.0227\nVelocity: 0.00\nGroup: marts"}, {"font": {"color": "white"}, "group": "staging", "id": "models/staging/stg_products.sql", "label": "stg_products", "shape": "dot", "size": 18.98612599073037, "title": "Module: models/staging/stg_products.sql\nPageRank: 0.0498\nVelocity: 0.00\nGroup: staging"}, {"font": {"color": "white"}, "group": "staging", "id": "models/staging/stg_locations.sql", "label": "stg_locations", "shape": "dot", "size": 18.365473442305635, "title": "Module: models/staging/stg_locations.sql\nPageRank: 0.0421\nVelocity: 0.00\nGroup: staging"}, {"font": {"color": "white"}, "group": "marts", "id": "models/marts/locations.yml", "label": "locations", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/marts/locations.yml\nPageRank: 0.0227\nVelocity: 0.00\nGroup: marts"}, {"font": {"color": "white"}, "group": "marts", "id": "models/marts/supplies.yml", "label": "supplies", "shape": "dot", "size": 16.819175539445958, "title": "Module: models/marts/supplies.yml\nPageRank: 0.0227\nVelocity: 0.00\nGroup: marts"}, {"font": {"color": "white"}, "group": "sources", "id": "seeds/jaffle-data/raw_items.csv", "label": "raw_items", "shape": "dot", "size": 16.819175539445958, "title": "Module: seeds/jaffle-data/raw_items.csv\nPageRank: 0.0227\nVelocity: 0.00\nGroup: sources"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": "models/marts/supplies.sql", "title": "Weight: 1", "to": "models/staging/stg_supplies.sql", "value": 1}, {"arrows": "to", "from": "models/marts/orders.sql", "title": "Weight: 1", "to": "models/marts/order_items.sql", "value": 1}, {"arrows": "to", "from": "models/marts/orders.sql", "title": "Weight: 1", "to": "models/staging/stg_orders.sql", "value": 1}, {"arrows": "to", "from": "models/marts/products.sql", "title": "Weight: 1", "to": "models/staging/stg_products.sql", "value": 1}, {"arrows": "to", "from": "models/marts/customers.sql", "title": "Weight: 1", "to": "models/staging/stg_customers.sql", "value": 1}, {"arrows": "to", "from": "models/marts/customers.sql", "title": "Weight: 1", "to": "models/marts/orders.sql", "value": 1}, {"arrows": "to", "from": "models/marts/order_items.sql", "title": "Weight: 1", "to": "models/staging/stg_order_items.sql", "value": 1}, {"arrows": "to", "from": "models/marts/order_items.sql", "title": "Weight: 1", "to": "models/staging/stg_supplies.sql", "value": 1}, {"arrows": "to", "from": "models/marts/order_items.sql", "title": "Weight: 1", "to": "models/staging/stg_products.sql", "value": 1}, {"arrows": "to", "from": "models/marts/order_items.sql", "title": "Weight: 1", "to": "models/staging/stg_orders.sql", "value": 1}, {"arrows": "to", "from": "models/marts/locations.sql", "title": "Weight: 1", "to": "models/staging/stg_locations.sql", "value": 1}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"layout": {"hierarchical": {"enabled": true, "direction": "LR", "sortMethod": "directed", "nodeSpacing": 150, "levelSeparation": 250}}, "physics": {"hierarchicalRepulsion": {"centralGravity": 0.0, "springLength": 100, "springConstant": 0.01, "nodeDistance": 150, "damping": 0.09}, "solver": "hierarchicalRepulsion"}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

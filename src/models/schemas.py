@@ -117,7 +117,7 @@ class ModuleNode(BaseModel):
     path: str  # Relative to repo root
     node_type: Literal["module"] = "module"
     language: Literal[
-        "python", "sql", "yaml", "jinja_sql", "csv", "unknown"
+        "python", "sql", "yaml", "jinja_sql", "csv", "notebook", "typescript", "tsx", "javascript", "unknown"
     ]
     purpose_statement: Optional[str] = None
     domain_cluster: Optional[str] = None

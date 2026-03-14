@@ -17,6 +17,7 @@ import networkx as nx
 from src.models.schemas import (
     CodebaseGraph,
     ConsumesEdge,
+    CircularDependency,
     DatasetNode,
     Evidence,
     ModuleNode,
@@ -217,6 +218,54 @@ class Hydrologist:
                 pass
 
         return result
+
+    def suggest_cycle_resolution(
+        self, cycle: List[str], graph: nx.DiGraph
+    ) -> str:
+        """Analyze cycle and suggest breaking at the weakest edge (lowest PageRank target)."""
+        if len(cycle) < 2:
+            return "Trivial self-loop; remove self-import."
+    
+        # Find the edge whose target has the lowest PageRank
+        weakest_target = cycle[0]
+        weakest_score = float("inf")
+        weakest_source = cycle[-1]
+    
+        for i in range(len(cycle)):
+            src = cycle[i]
+            tgt = cycle[(i + 1) % len(cycle)]
+            pr = graph.nodes.get(tgt, {}).get("pagerank", 0.0)
+            if pr < weakest_score:
+                weakest_score = pr
+                weakest_target = tgt
+                weakest_source = src
+    
+        return (
+            f"Break the dependency from `{Path(weakest_source).name}` → `{Path(weakest_target).name}` "
+            f"(PageRank {weakest_score:.4f}). Consider extracting shared logic into a "
+            f"new module or using dependency injection to decouple the cycle: "
+            f"{' → '.join(Path(p).name for p in cycle)}."
+        )
+
+    def detect_circular_dependencies(self, graph: nx.DiGraph) -> List[CircularDependency]:
+        """Find cycles in the directed graph."""
+        cycles = []
+        try:
+            # Simple cycle finding for DiGraph
+            for cycle in nx.simple_cycles(graph):
+                if len(cycle) > 1:  # ignore self-loops
+                    cycles.append(
+                        CircularDependency(
+                            cycle_path=cycle.copy(),
+                            ref_sites=[],  # Without deep AST traversal again, ref sites are empty
+                            suggestion=self.suggest_cycle_resolution(cycle, graph),
+                        )
+                    )
+        except nx.NetworkXNoCycle:
+            pass
+        except nx.NetworkXNotImplemented:
+            pass
+        return cycles
 
     def detect_cycles(self) -> List[List[str]]:
         """Detect cycles in the lineage DAG using nx.simple_cycles.

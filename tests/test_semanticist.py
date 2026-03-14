@@ -23,20 +23,32 @@ def test_context_window_budget(semanticist):
 
 
 @patch("src.agents.semanticist.completion")
-def test_doc_drift_detection(mock_completion, semanticist):
+@patch.object(SemanticistAgent, "_extract_existing_docs")
+def test_doc_drift_detection(mock_extract_docs, mock_completion, semanticist):
     """Test doc drift flags correctly setting based on LLM response."""
-    # Mock LLM response for bulk purpose generation
-    mock_msg = MagicMock()
-    mock_msg.content = "This module handles database ingestion and API fetching."
-    mock_choice = MagicMock()
-    mock_choice.message = mock_msg
+    # Mock existing docs so the drift check isn't skipped
+    mock_extract_docs.return_value = "This module does one thing."
     
-    mock_res = MagicMock()
-    mock_res.choices = [mock_choice]
-    mock_res.usage.prompt_tokens = 10
-    mock_res.usage.completion_tokens = 20
+    # Mock LLM responses for bulk purpose generation and then drift check
+    mock_msg1 = MagicMock()
+    mock_msg1.content = "This module handles database ingestion and API fetching."
+    mock_choice1 = MagicMock()
+    mock_choice1.message = mock_msg1
+    mock_res1 = MagicMock()
+    mock_res1.choices = [mock_choice1]
+    mock_res1.usage.prompt_tokens = 10
+    mock_res1.usage.completion_tokens = 20
     
-    mock_completion.return_value = mock_res
+    mock_msg2 = MagicMock()
+    mock_msg2.content = "Analysis: The docs say X but purpose says Y. DRIFT: true."
+    mock_choice2 = MagicMock()
+    mock_choice2.message = mock_msg2
+    mock_res2 = MagicMock()
+    mock_res2.choices = [mock_choice2]
+    mock_res2.usage.prompt_tokens = 50
+    mock_res2.usage.completion_tokens = 20
+    
+    mock_completion.side_effect = [mock_res1, mock_res2]
     
     node = ModuleNode(
         path="src/ingest.py", 
@@ -44,10 +56,16 @@ def test_doc_drift_detection(mock_completion, semanticist):
         is_complete_parse=True,
     )
     
+    # Need mock prompts
+    from pathlib import Path
+    semanticist.prompts_dir.mkdir(parents=True, exist_ok=True)
+    (semanticist.prompts_dir / "purpose_prompt.txt").write_text("{module_path} {code_summary}", encoding="utf-8")
+    (semanticist.prompts_dir / "doc_drift_prompt.txt").write_text("Compare {existing_docs} vs {inferred_purpose}", encoding="utf-8")
+    
     semanticist.generate_purpose_statement(node)
     
     # Assert Purpose is set and doc_drift is flagged
-    assert node.purpose_statement == mock_choice.message.content
+    assert node.purpose_statement == mock_choice1.message.content
     assert node.doc_drift is True
 
 
