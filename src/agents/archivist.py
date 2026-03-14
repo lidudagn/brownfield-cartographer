@@ -367,6 +367,77 @@ class ArchivistAgent:
         return lines
 
     # =========================================================================
+    # semantic_index/ — Persisted Vector Store
+    # =========================================================================
+
+    def generate_semantic_index(
+        self,
+        graph: CodebaseGraph,
+        output_dir: str,
+    ) -> None:
+        """Persist module purpose embeddings as a queryable vector store.
+
+        Creates:
+          semantic_index/embeddings.npy — numpy array of all purpose vectors
+          semantic_index/metadata.json  — mapping: index → {path, purpose, domain}
+        """
+        modules_with_purpose = [
+            m for m in graph.modules if m.purpose_statement
+        ]
+        
+        # Fallback: use all modules even without purpose statements
+        if not modules_with_purpose:
+            modules_with_purpose = graph.modules
+            logger.info("No purpose statements found; creating metadata-only semantic index.")
+
+        try:
+            import numpy as np
+            from sentence_transformers import SentenceTransformer
+            has_ml = True
+        except ImportError:
+            logger.warning("sentence-transformers/numpy not available; creating metadata-only index.")
+            has_ml = False
+
+        idx_dir = Path(output_dir) / "semantic_index"
+        idx_dir.mkdir(parents=True, exist_ok=True)
+        
+        if has_ml:
+            # Compute embeddings
+            model = SentenceTransformer("all-MiniLM-L6-v2")
+            statements = [m.purpose_statement or f"Module at {m.path}" for m in modules_with_purpose]
+            embeddings = model.encode(statements, show_progress_bar=False)
+
+            # Save embeddings as numpy
+            np.save(str(idx_dir / "embeddings.npy"), embeddings)
+
+        # Save metadata
+        metadata = []
+        for i, m in enumerate(modules_with_purpose):
+            metadata.append({
+                "index": i,
+                "path": m.path,
+                "purpose": m.purpose_statement or f"Module at {m.path}",
+                "domain": m.domain_cluster or "",
+                "language": m.language,
+                "pagerank": m.pagerank,
+            })
+
+        (idx_dir / "metadata.json").write_text(
+            json.dumps(metadata, indent=2), encoding="utf-8"
+        )
+
+        logger.info(
+            f"Saved semantic index: {len(metadata)} vectors to {idx_dir}"
+        )
+
+        self._log_trace(
+            action="semantic_index",
+            detail=f"Persisted {len(metadata)} embeddings to {idx_dir}",
+            confidence=1.0,
+            evidence_source="instrumentation",
+        )
+
+    # =========================================================================
     # cartography_trace.jsonl — Audit Trail
     # =========================================================================
 
