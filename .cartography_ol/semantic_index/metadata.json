@@ -1,0 +1,82 @@
+[
+  {
+    "index": 0,
+    "path": "src/ol_dbt/models/marts/mitxpro/marts__mitxpro_all_coupons.sql",
+    "purpose": "transforms data from src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_company.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_product.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_couponpaymentversion.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_allorders.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__b2becommerce_b2border.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_order.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_coupon.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_couponproduct.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__b2becommerce_b2breceipt.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__program_runs.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_line.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_allcoupons.sql. using CTEs: allcoupons, allorders, ecommerce_coupon, ecommerce_couponpaymentversion, ecommerce_company, ecommerce_line, mitxpro__programruns, ecommerce_order, b2b_order, b2b_receipt, product, couponproduct, pull_req_ref_num, redeemed_coupons, redeemed_b2b_coupons, coupons_used_by_name, pull_product_regular, pull_product_b2b, pull_product_nonorders. producing a business-facing mart dataset.",
+    "domain": "Ol Dbt",
+    "language": "jinja_sql",
+    "pagerank": 0.008719197420096513
+  },
+  {
+    "index": 1,
+    "path": "src/ol_dbt/models/marts/combined/marts__combined_course_enrollment_detail.sql",
+    "purpose": "transforms data from src/ol_dbt/models/intermediate/micromasters/int__micromasters__orders.sql, src/ol_dbt/models/intermediate/mitxonline/int__mitxonline__ecommerce_order.sql, src/ol_dbt/models/intermediate/combined/int__combined__courserun_enrollments.sql, src/ol_dbt/models/intermediate/mitxonline/int__mitxonline__ecommerce_transaction.sql, src/ol_dbt/models/intermediate/combined/int__combined__users.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__courserunenrollments.sql, src/ol_dbt/models/intermediate/mitxonline/int__mitxonline__courserun_certificates.sql, src/ol_dbt/models/intermediate/bootcamps/int__bootcamps__ecommerce_receipt.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_order.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_receipt.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_line.sql, src/ol_dbt/models/intermediate/micromasters/int__micromasters__users.sql, src/ol_dbt/models/intermediate/bootcamps/int__bootcamps__ecommerce_order.sql, src/ol_dbt/models/intermediate/combined/int__combined__course_runs.sql. using CTEs: combined_enrollments, mitxpro_enrollments, combined_courseruns, combined_users, mitxonline_transactions, mitxonline_completed_orders, micromasters_completed_orders, micromasters_users, mitxpro_completed_orders, mitxpro_receipts, bootcamps_completed_orders, bootcamps_receipts, mitxpro__ecommerce_line, mitxonline_certificates, combined_enrollment_detail. producing a business-facing mart dataset.",
+    "domain": "Ol Dbt",
+    "language": "jinja_sql",
+    "pagerank": 0.008858640616747028
+  },
+  {
+    "index": 2,
+    "path": "src/ol_dbt/models/marts/combined/marts__combined__users.sql",
+    "purpose": "transforms data from src/ol_dbt/models/intermediate/mitx/int__mitx__users.sql, src/ol_dbt/models/intermediate/combined/int__combined__courserun_enrollments.sql, src/ol_dbt/models/marts/combined/marts__combined__orders.sql, src/ol_dbt/models/intermediate/combined/int__combined__users.sql, src/ol_dbt/models/marts/mitxonline/marts__mitxonline_user_profiles.sql, src/ol_dbt/models/marts/combined/marts__combined_program_enrollment_detail.sql, src/ol_dbt/models/intermediate/combined/int__combined__course_runs.sql. using CTEs: mitx__users, non_mitx_users, combined_enrollments, combined_programs, orders, income, combined_courseruns, program_stats, orders_stats, course_stats, combined_users. producing a business-facing mart dataset.",
+    "domain": "Ol Dbt",
+    "language": "jinja_sql",
+    "pagerank": 0.00985141176549116
+  },
+  {
+    "index": 3,
+    "path": "src/ol_dbt/models/marts/combined/marts__combined__orders.sql",
+    "purpose": "transforms data from src/ol_dbt/models/intermediate/micromasters/int__micromasters__orders.sql, src/ol_dbt/models/intermediate/mitxonline/int__mitxonline__ecommerce_order.sql, src/ol_dbt/models/intermediate/mitxonline/int__mitxonline__ecommerce_transaction.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_company.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_couponpaymentversion.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_allorders.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_order.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_receipt.sql, src/ol_dbt/models/intermediate/bootcamps/int__bootcamps__ecommerce_order.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__program_runs.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_line.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__users.sql, src/ol_dbt/models/intermediate/bootcamps/int__bootcamps__ecommerce_receipt.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__ecommerce_allcoupons.sql. using CTEs: bootcamps__ecommerce_order, bootcamps__receipt, mitxpro__ecommerce_allorders, mitxonline__ecommerce_order, mitxonline__transaction, mitxpro__lines, mitxpro__programruns, mitxpro__receipts, mitxpro__ecommerce_order, mitxpro__ecommerce_allcoupons, micromasters_orders, mitxpro__users, mitxpro__ecommerce_couponpaymentversion, mitxpro__ecommerce_company, mitxonline_orders, bootcamps_orders, mitxpro_orders, combined_orders. producing a business-facing mart dataset.",
+    "domain": "Ol Dbt",
+    "language": "jinja_sql",
+    "pagerank": 0.009157501618673411
+  },
+  {
+    "index": 4,
+    "path": "src/ol_dbt/models/marts/combined/marts__combined_program_enrollment_detail.sql",
+    "purpose": "transforms data from src/ol_dbt/models/intermediate/mitx/int__mitx__programs.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__programenrollments.sql, src/ol_dbt/models/intermediate/combined/int__combined__courserun_enrollments.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__program_certificates.sql, src/ol_dbt/models/intermediate/edxorg/int__edxorg__mitx_program_certificates.sql, src/ol_dbt/models/intermediate/edxorg/int__edxorg__mitx_program_courses.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__courses.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__users.sql, src/ol_dbt/models/intermediate/micromasters/int__micromasters__program_enrollments.sql, src/ol_dbt/models/intermediate/mitx/int__mitx__courses.sql, src/ol_dbt/models/intermediate/mitxonline/int__mitxonline__program_certificates.sql, src/ol_dbt/models/intermediate/edxorg/int__edxorg__mitx_users.sql, src/ol_dbt/models/intermediate/mitxonline/int__mitxonline__programenrollments.sql, src/ol_dbt/models/intermediate/combined/int__combined__course_runs.sql, src/ol_dbt/models/intermediate/mitxonline/int__mitxonline__programs.sql, src/ol_dbt/models/intermediate/mitx/int__mitx__program_requirements.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__programs.sql, src/ol_dbt/models/intermediate/mitxonline/int__mitxonline__users.sql, src/ol_dbt/models/intermediate/edxorg/int__edxorg__mitx_program_enrollments.sql. using CTEs: mitxpro__programenrollments, mitx_programs, mitxpro__programs, mitxpro__program_certificates, mitxpro__users, mitxonline__programenrollments, mitxonline__programs, mitxonline__users, mitx__programs, mitxonline__program_certificates, edx_program_certificates, edx_program_enrollments, edxorg__users, micromasters__program_enrollments, edxorg_mitx_program_courses, mitx__courses, mitxpro__courses, combined_enrollments, combined_courseruns, combined_programs, courses_in_programs, final_combined_programs. producing a business-facing mart dataset.",
+    "domain": "Ol Dbt",
+    "language": "jinja_sql",
+    "pagerank": 0.011415964167574356
+  },
+  {
+    "index": 5,
+    "path": "src/ol_dbt/models/marts/combined/marts__combined_discounts.sql",
+    "purpose": "transforms data from src/ol_dbt/models/intermediate/mitxonline/int__mitxonline__ecommerce_order.sql, src/ol_dbt/models/intermediate/mitxonline/int__mitxonline__ecommerce_discountproduct.sql, src/ol_dbt/models/intermediate/mitxonline/int__mitxonline__ecommerce_discount.sql, src/ol_dbt/models/intermediate/mitxonline/int__mitxonline__ecommerce_product.sql, src/ol_dbt/models/marts/mitxpro/marts__mitxpro_all_coupons.sql. using CTEs: mitxonline_discount, mitxonline_discountproduct, mitxonline_product, mitxonline_order, mitxpro_all_coupons, mitxonline_order_sum, mitxonline_product_joins. producing a business-facing mart dataset.",
+    "domain": "Ol Dbt",
+    "language": "jinja_sql",
+    "pagerank": 0.010210627924236671
+  },
+  {
+    "index": 6,
+    "path": "src/ol_dbt/models/reporting/organization_administration_report.sql",
+    "purpose": "transforms data from src/ol_dbt/models/intermediate/combined/int__combined__user_course_roles.sql, src/ol_dbt/models/dimensional/tfact_problem_events.sql, src/ol_dbt/models/dimensional/tfact_course_navigation_events.sql, src/ol_dbt/models/dimensional/tfact_chatbot_events.sql, src/ol_dbt/models/dimensional/tfact_video_events.sql, src/ol_dbt/models/marts/combined/marts__combined_course_enrollment_detail.sql, src/ol_dbt/models/dimensional/dim_user.sql, src/ol_dbt/models/intermediate/mitxonline/int__mitxonline__b2b_contract_to_courseruns.sql, src/ol_dbt/models/dimensional/tfact_discussion_events.sql. using CTEs: enrollment_detail, user_course_roles, chatbot_events, video_events, problem_events, discussion_events, navigation_events, user, b2b_contract_to_courseruns, org_field, certificate_org_data, enroll_data, enroll_activity, chatbot_data, video_data, problem_data, navigation_data, discussion_data, combined_data, activity_day_data.",
+    "domain": "Ol Dbt",
+    "language": "jinja_sql",
+    "pagerank": 0.009151290132563234
+  },
+  {
+    "index": 7,
+    "path": "src/ol_dbt/models/reporting/learner_demographics_and_cert_info.sql",
+    "purpose": "transforms data from src/ol_dbt/models/marts/combined/marts__combined_coursesinprogram.sql, src/ol_dbt/models/marts/combined/marts__combined_course_enrollment_detail.sql, src/ol_dbt/models/marts/combined/marts__combined_program_enrollment_detail.sql, src/ol_dbt/models/marts/combined/marts__combined__users.sql. using CTEs: combined__users, program_enrollment_detail, combined_course_enrollment_detail, combined_coursesinprogram, dedp_indicators, dedp_certs.",
+    "domain": "Ol Dbt",
+    "language": "jinja_sql",
+    "pagerank": 0.00681528202966807
+  },
+  {
+    "index": 8,
+    "path": "src/ol_dbt/models/reporting/instructor_module_report.sql",
+    "purpose": "transforms data from src/ol_dbt/models/dimensional/dim_course_content.sql, src/ol_dbt/models/dimensional/tfact_chatbot_events.sql, src/ol_dbt/models/dimensional/tfact_video_events.sql, src/ol_dbt/models/marts/combined/marts__combined_course_enrollment_detail.sql, src/ol_dbt/models/dimensional/dim_user.sql, src/ol_dbt/models/reporting/organization_administration_report.sql, src/ol_dbt/models/dimensional/dim_video.sql. using CTEs: chatbot_events, course_content, user, enrollment_detail, video_events, video, org_data, any_activity, enroll_activity, video_pre_query, video_watches, video_views_table, combined_data.",
+    "domain": "Ol Dbt",
+    "language": "jinja_sql",
+    "pagerank": 0.010987093845044591
+  },
+  {
+    "index": 9,
+    "path": "src/ol_dbt/models/intermediate/combined/int__combined__courserun_enrollments.sql",
+    "purpose": "transforms data from src/ol_dbt/models/intermediate/combined/int__combined__courserun_certificates.sql, src/ol_dbt/models/intermediate/mitxresidential/int__mitxresidential__courserun_enrollments.sql, src/ol_dbt/models/intermediate/bootcamps/int__bootcamps__courserunenrollments.sql, src/ol_dbt/models/staging/mitxpro/stg__emeritus__api__bigquery__user_enrollments.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__courserunenrollments.sql, src/ol_dbt/models/staging/mitxpro/stg__global_alumni__api__bigquery__user_enrollments.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__courserun_grades.sql, src/ol_dbt/models/intermediate/mitxresidential/int__mitxresidential__courserun_grades.sql, src/ol_dbt/models/intermediate/mitxpro/int__mitxpro__course_runs.sql, src/ol_dbt/models/intermediate/mitx/int__mitx__courserun_grades.sql, src/ol_dbt/models/intermediate/mitx/int__mitx__courserun_enrollments.sql, src/ol_dbt/models/intermediate/combined/int__combined__course_runs.sql. using CTEs: mitx_enrollments, mitxpro_enrollments, emeritus_enrollments, global_alumni_enrollments, bootcamps_enrollments, residential_enrollments, residential_grades, mitx_grades, mitxpro_grades, combined_certificates, combined_courseruns, mitxpro_courseruns, combined_enrollments.",
+    "domain": "Ol Dbt",
+    "language": "jinja_sql",
+    "pagerank": 0.013306422387364744
+  }
+]
